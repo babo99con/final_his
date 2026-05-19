@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.seoulit.reception.inpatient.mapper.InpatientReceptionMapper">
+
+    <select id="selectInpatientReceptions" resultType="kr.co.seoulit.reception.inpatient.dto.InpatientReceptionDTO">
+        SELECT
+            r.reception_id,
+            r.reception_no,
+            r.patient_id,
+            p.name AS patient_name,
+            r.visit_type,
+            r.department_id,
+            d.department_name AS department_name,
+            r.doctor_id,
+            doc.full_name AS doctor_name,
+            r.reservation_id,
+            r.scheduled_at,
+            r.arrived_at,
+            r.status,
+            r.note,
+            NVL(r.is_active, 1) AS is_active,
+            ia.admission_datetime AS admission_plan_at,
+            ba.ward_id,
+            ba.room_id,
+            r.created_at,
+            r.updated_at
+        FROM RECEPTION r
+        LEFT JOIN patient p ON p.patient_id = r.patient_id
+        LEFT JOIN CMH.STAFF_DEPARTMENT d
+            ON d.department_id = TO_CHAR(r.department_id)
+        LEFT JOIN CMH.STAFF doc
+            ON doc.staff_id = TO_CHAR(r.doctor_id)
+           AND doc.staff_id LIKE 'DOC-%'
+           AND UPPER(TRIM(NVL(doc.employment_status, 'ACTIVE'))) = 'ACTIVE'
+        LEFT JOIN inpatient_admission ia ON ia.reception_id = r.reception_id
+        LEFT JOIN (
+            SELECT bed_latest.*
+            FROM (
+                SELECT
+                    iba.*,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY iba.inpatient_admission_id
+                        ORDER BY iba.assignment_datetime DESC, iba.bed_assignment_id DESC
+                    ) AS rn
+                FROM inpatient_bed_assignment iba
+            ) bed_latest
+            WHERE bed_latest.rn = 1
+        ) ba ON ba.inpatient_admission_id = ia.inpatient_admission_id
+        <where>
+            r.visit_type = 'INPATIENT'
+            <if test="searchValue != null and searchValue != ''">
+                <choose>
+                    <when test="searchType == 'patientName'">
+                        AND p.name = #{searchValue}
+                    </when>
+                    <when test="searchType == 'status'">
+                        AND r.status = #{searchValue}
+                    </when>
+                    <when test="searchType == 'wardId'">
+                        AND ba.ward_id = TO_NUMBER(REGEXP_SUBSTR(#{searchValue}, '^[0-9]+$'))
+                    </when>
+                    <when test="searchType == 'roomId'">
+                        AND ba.room_id = TO_NUMBER(REGEXP_SUBSTR(#{searchValue}, '^[0-9]+$'))
+                    </when>
+                </choose>
+            </if>
+        </where>
+        ORDER BY admission_plan_at ASC NULLS LAST
+    </select>
+
+</mapper>
+
+

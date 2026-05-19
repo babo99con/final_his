@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.app.medical_support.nursingtreatment.mapper.MedicationRecordMapper">
+
+    <select id="searchMedicationRecord" resultType="com.app.medical_support.nursingtreatment.dto.MedicationRecordDTO">
+        SELECT
+            mr.medication_record_id,
+            mr.medication_id,
+            mr.administered_at,
+            mr.dose_number,
+            mr.dose_unit,
+            mr.dose_kind,
+            mr.nursing_id,
+            mr.nurse_name,
+            mr.status,
+            mr.progress_status,
+            mr.created_at,
+            mr.patient_id,
+            mr.patient_name,
+            mr.department_name
+        FROM CHJ.MEDICATION_RECORD mr
+        <where>
+            <if test="patientName != null and patientName != ''">
+                AND mr.patient_name LIKE '%' || #{patientName} || '%'
+            </if>
+            <if test="departmentName != null and departmentName != ''">
+                AND mr.department_name LIKE '%' || #{departmentName} || '%'
+            </if>
+            <if test="progressStatus != null and progressStatus != ''">
+                AND UPPER(TRIM(mr.progress_status)) = UPPER(TRIM(#{progressStatus}))
+            </if>
+            <if test="startDate != null and startDate != ''">
+                AND SUBSTR(TRIM(mr.administered_at), 1, 10) <![CDATA[>=]]> #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND SUBSTR(TRIM(mr.administered_at), 1, 10) <![CDATA[<=]]> #{endDate}
+            </if>
+        </where>
+        ORDER BY mr.administered_at DESC NULLS LAST, mr.medication_record_id DESC
+    </select>
+
+</mapper>

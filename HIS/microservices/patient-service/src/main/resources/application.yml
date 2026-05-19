@@ -1,0 +1,53 @@
+server:
+  port: 8181
+  address: 0.0.0.0
+
+spring:
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+
+  cache:
+    type: simple
+
+  datasource:
+    driver-class-name: oracle.jdbc.OracleDriver
+    url: jdbc:oracle:thin:@//localhost:1521/xepdb1
+    username: HOSPITAL
+    password: ${PASSWORD:-changeme}
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    database-platform: org.hibernate.dialect.OracleDialect
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST:localhost}
+      port: ${SPRING_REDIS_PORT:6379}
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+  mapper-locations: classpath:/mapper/**/*.xml
+  type-aliases-package: kr.co.hospital.patients
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+app:
+  storage:
+    type: minio
+
+minio:
+  endpoint: http://localhost:9000
+  access-key: ${ACCESS_KEY:-changeme}
+  secret-key: ${SECRET_KEY:-changeme}
+  bucket: hospital-files
+

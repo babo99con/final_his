@@ -1,0 +1,4 @@
+rootProject.name = 'hospital_clinical'
+
+include(':util')
+project(':util').projectDir = file('../../util')

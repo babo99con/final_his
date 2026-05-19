@@ -1,0 +1,4 @@
+rootProject.name = 'hospital-billing-backend'
+
+include(':util')
+project(':util').projectDir = file('../../util')

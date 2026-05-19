@@ -1,0 +1,70 @@
+﻿server:
+  port: 8081
+spring:
+  cloud:
+    function:
+      definition: clinicalCompletedConsumer;medicationRecordOutcomeConsumer;treatmentResultOutcomeConsumer;diagnosticExamOutcomeConsumer;diagnosticTestResultOutcomeConsumer
+    stream:
+      defaultBinder: kafka
+      default:
+        contentType: application/json
+      function:
+        definition: clinicalCompletedConsumer;medicationRecordOutcomeConsumer;treatmentResultOutcomeConsumer;diagnosticExamOutcomeConsumer;diagnosticTestResultOutcomeConsumer
+      bindings:
+        clinicalCompletedConsumer-in-0:
+          destination: his.clinical.visit-completed
+          group: billingClinicalCompletedGroup
+        medicationRecordOutcomeConsumer-in-0:
+          destination: medicationRecordOutcome,output-medicationRecordOutcome
+          group: billingMedicalSupportOutcomeGroup
+        treatmentResultOutcomeConsumer-in-0:
+          destination: treatmentResultOutcome,output-treatmentResultOutcome
+          group: billingMedicalSupportOutcomeGroup
+        diagnosticExamOutcomeConsumer-in-0:
+          destination: diagnosticExamOutcome,output-diagnosticExamOutcome
+          group: billingMedicalSupportOutcomeGroup
+        diagnosticTestResultOutcomeConsumer-in-0:
+          destination: diagnosticTestResultOutcome,output-diagnosticTestResultOutcome
+          group: billingMedicalSupportOutcomeGroup
+      kafka:
+        bindings:
+          clinicalCompletedConsumer-in-0:
+            consumer:
+              startOffset: earliest
+          medicationRecordOutcomeConsumer-in-0:
+            consumer:
+              startOffset: earliest
+          treatmentResultOutcomeConsumer-in-0:
+            consumer:
+              startOffset: earliest
+          diagnosticExamOutcomeConsumer-in-0:
+            consumer:
+              startOffset: earliest
+          diagnosticTestResultOutcomeConsumer-in-0:
+            consumer:
+              startOffset: earliest
+        binder:
+          brokers: ${KAFKA_BROKERS:localhost}
+          defaultBrokerPort: ${KAFKA_BROKER_PORT:9092}
+  datasource:
+    driver-class-name: oracle.jdbc.OracleDriver
+    url: jdbc:oracle:thin:@//localhost:1521/xepdb1
+    username: HOSPITAL
+    password: ${PASSWORD:-changeme}
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        physical_naming_strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+
+toss:
+    secret-key: ${TOSS_SECRET_KEY}
+    base-url: https://api.tosspayments.com
+
+patient:
+  api:
+    base-url: ${PATIENT_API_BASE_URL:http://localhost:8181}

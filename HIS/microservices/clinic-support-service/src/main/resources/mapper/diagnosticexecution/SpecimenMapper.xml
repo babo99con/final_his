@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.app.medical_support.diagnosticexecution.mapper.SpecimenMapper">
+
+    <select id="searchSpecimen" resultType="com.app.medical_support.diagnosticexecution.entity.SpecimenEntity">
+        SELECT
+            specimen_id,
+            visit_id,
+            specimen_type,
+            collected_at,
+            created_by,
+            TRIM(status) AS status
+        FROM CHJ.SPECIMEN
+        WHERE TRIM(status) = 'Y'
+        <choose>
+            <when test="searchType != null and searchType.equals('visitId')">
+                AND visit_id = #{searchValue}
+            </when>
+            <when test="searchType != null and searchType.equals('collectedAt')">
+                AND TO_CHAR(collected_at, 'YYYY-MM-DD') = #{searchValue}
+            </when>
+            <when test="searchType != null and searchType.equals('specimenType')">
+                AND specimen_type = #{searchValue}
+            </when>
+            <otherwise>
+                AND 1 = 0
+            </otherwise>
+        </choose>
+        ORDER BY collected_at DESC NULLS LAST, specimen_id DESC
+    </select>
+
+</mapper>

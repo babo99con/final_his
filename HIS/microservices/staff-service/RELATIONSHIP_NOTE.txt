@@ -1,0 +1,13 @@
+엔터티 연관관계 반영 사항
+
+1. StaffEntity
+- doctor / nurse 를 @OneToOne(mappedBy="employee") 로 추가
+
+2. DoctorEntity / NurseEntity
+- employee 를 @OneToOne + @JoinColumn(name="STAFF_ID", insertable=false, updatable=false) 로 추가
+- staffId 컬럼 필드와 중복 매핑 충돌을 피하기 위해 조회/탐색용 연관관계로 설정
+
+3. 현재 흐름
+- 1단계: EMPLOYEE 공통 생성
+- 2단계: EMPLOYEE_DOCTOR 또는 EMPLOYEE_NURSE 상세 생성
+- 조회는 MyBatis, 쓰기는 JPA 구조 유지

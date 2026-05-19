@@ -1,0 +1,10 @@
+pluginManagement {
+	repositories {
+		gradlePluginPortal()
+	}
+}
+rootProject.name = 'hospital'
+
+// Allow running this service as a standalone Gradle build while depending on the shared :util project.
+include(':util')
+project(':util').projectDir = file('../../util')

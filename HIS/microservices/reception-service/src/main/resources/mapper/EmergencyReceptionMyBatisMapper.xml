@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.seoulit.reception.emergency.mapper.EmergencyReceptionMapper">
+
+    <select id="selectEmergencyReceptions" resultType="kr.co.seoulit.reception.emergency.dto.EmergencyReceptionDTO">
+        SELECT
+            r.reception_id,
+            r.reception_no,
+            r.patient_id,
+            p.name AS patient_name,
+            r.visit_type,
+            r.department_id,
+            d.name AS department_name,
+            r.doctor_id,
+            doc.full_name AS doctor_name,
+            r.reservation_id,
+            r.scheduled_at,
+            r.arrived_at,
+            r.status,
+            r.note,
+            NVL(r.is_active, 1) AS is_active,
+            TO_NUMBER(REGEXP_SUBSTR(t.triage_level_cd, '[0-9]+')) AS triage_level,
+            ed.emergency_note AS chief_complaint,
+            ed.temperature AS vital_temp,
+            TO_NUMBER(REGEXP_SUBSTR(ed.blood_pressure, '^[0-9]+')) AS vital_bp_systolic,
+            TO_NUMBER(REGEXP_SUBSTR(ed.blood_pressure, '[0-9]+$')) AS vital_bp_diastolic,
+            ed.pulse_rate AS vital_hr,
+            CAST(NULL AS NUMBER) AS vital_rr,
+            CAST(NULL AS NUMBER) AS vital_spo2,
+            ed.arrival_transport_cd AS arrival_mode,
+            t.triage_note,
+            r.created_at,
+            r.updated_at
+        FROM RECEPTION r
+        LEFT JOIN patient p ON p.patient_id = r.patient_id
+        LEFT JOIN departments d ON d.id = r.department_id
+        LEFT JOIN staff doc ON doc.id = r.doctor_id
+        LEFT JOIN emergency_detail ed ON ed.reception_id = r.reception_id
+        LEFT JOIN (
+            SELECT triage_latest.*
+            FROM (
+                SELECT
+                    et.*,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY et.reception_id
+                        ORDER BY et.triage_datetime DESC, et.emergency_triage_id DESC
+                    ) AS rn
+                FROM emergency_triage et
+            ) triage_latest
+            WHERE triage_latest.rn = 1
+        ) t ON t.reception_id = r.reception_id
+        <where>
+            r.visit_type = 'EMERGENCY'
+            <if test="searchValue != null and searchValue != ''">
+                <choose>
+                    <when test="searchType == 'patientId'">
+                        AND r.patient_id = #{searchValue}
+                    </when>
+                    <when test="searchType == 'status'">
+                        AND r.status = #{searchValue}
+                    </when>
+                    <when test="searchType == 'triageLevel'">
+                        AND TO_NUMBER(REGEXP_SUBSTR(t.triage_level_cd, '[0-9]+')) =
+                            TO_NUMBER(REGEXP_SUBSTR(#{searchValue}, '^[0-9]+$'))
+                    </when>
+                </choose>
+            </if>
+        </where>
+        ORDER BY triage_level ASC NULLS LAST, r.created_at ASC
+    </select>
+
+</mapper>
+
+

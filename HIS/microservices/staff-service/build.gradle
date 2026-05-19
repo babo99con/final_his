@@ -1,0 +1,70 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.11'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.jetbrains.kotlin.jvm' version '2.2.21'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+description = 'Employee'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':util')
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    // ✅ jpa
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.5'
+    //롬복
+    compileOnly 'org.projectlombok:lombok'
+
+    // ✅ 오라클 (버전명시 )
+    runtimeOnly 'com.oracle.database.jdbc:ojdbc11:23.3.0.23.09'
+
+
+
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    // ✅ my바티스
+    testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:3.0.5'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // ✅ 롬복
+    compileOnly("org.projectlombok:lombok")
+
+
+    // ✅ 맵스트리트
+    implementation 'org.mapstruct:mapstruct:1.6.3'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"//localhost:포트/api/employee/list
+
+    // ✅ 미니온
+    implementation 'io.minio:minio:8.5.7'
+
+
+
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

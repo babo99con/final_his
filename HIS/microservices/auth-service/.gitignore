@@ -1,0 +1,30 @@
+# ===== Logs =====
+logs/
+*.log
+
+# ===== Build =====
+/build/
+/out/
+/target/
+/bin/
+
+# ===== Gradle =====
+.gradle/
+
+# ===== IDE =====
+.idea/
+.vscode/
+*.iml
+.classpath
+.factorypath
+.project
+.settings/
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Env =====
+.env
+application-*.properties
+application-*.yml

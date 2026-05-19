@@ -1,0 +1,119 @@
+package com.example.hospitalClinical.encounter.controller;
+
+import com.hms.util.api.ApiResponse;
+import com.example.hospitalClinical.documentation.dto.DrugSearchResult;
+import com.example.hospitalClinical.documentation.dto.HiraProcedureSearchResult;
+import com.example.hospitalClinical.documentation.service.DocumentationService;
+import com.example.hospitalClinical.encounter.dto.ClinicalVitalAssessResponse;
+import com.example.hospitalClinical.encounter.dto.ClinicalVitalAssessSaveRequest;
+import com.example.hospitalClinical.encounter.dto.VisitResponse;
+import com.example.hospitalClinical.encounter.service.EncounterService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
+@CrossOrigin(origins = {
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "http://localhost:5173"
+})
+@RestController
+@RequiredArgsConstructor
+@Slf4j
+@RequestMapping("/api/visits")
+public class VisitController {
+
+    private final EncounterService encounterService;
+    private final DocumentationService documentationService;
+
+    @GetMapping("/{visitId}/vital-assess")
+    public ResponseEntity<ApiResponse<ClinicalVitalAssessResponse>> getVitalAssess(
+            @PathVariable("visitId") Long visitId) {
+        log.info("[GET] /api/visits/{}/vital-assess - 활력·문진 조회", visitId);
+        ClinicalVitalAssessResponse data =
+                encounterService.getClinicalVitalAssessByVisitId(visitId).orElse(null);
+        return ResponseEntity.ok(new ApiResponse<>(true, "활력·문진 조회 성공", data));
+    }
+
+    @PutMapping("/{visitId}/vital-assess")
+    public ResponseEntity<ApiResponse<ClinicalVitalAssessResponse>> saveVitalAssess(
+            @PathVariable("visitId") Long visitId,
+            @RequestBody ClinicalVitalAssessSaveRequest body) {
+        log.info("[PUT] /api/visits/{}/vital-assess - 활력·문진 저장", visitId);
+        ClinicalVitalAssessResponse result = encounterService.upsertClinicalVitalAssess(visitId, body);
+        return ResponseEntity.ok(new ApiResponse<>(true, "활력·문진 저장 성공", result));
+    }
+
+    @GetMapping("/{visitId}")
+    public ResponseEntity<ApiResponse<VisitResponse>> get(@PathVariable("visitId") Long visitId) {
+        log.info("[GET] /api/visits/{} - 진료 세션 조회", visitId);
+        VisitResponse result = VisitResponse.from(encounterService.getVisit(visitId));
+        return ResponseEntity.ok(new ApiResponse<>(true, "진료 세션 조회 성공", result));
+    }
+
+    @PatchMapping("/{visitId}/status")
+    public ResponseEntity<ApiResponse<VisitResponse>> updateStatus(
+            @PathVariable("visitId") Long visitId,
+            @RequestBody Map<String, String> body) {
+        log.info("[PATCH] /api/visits/{}/status - 진료 상태 변경", visitId);
+        String status = body != null ? body.get("visitStatus") : null;
+        VisitResponse result = VisitResponse.from(encounterService.updateVisitStatus(visitId, status));
+        return ResponseEntity.ok(new ApiResponse<>(true, "진료 상태 변경 성공", result));
+    }
+
+    @PostMapping("/{visitId}/end")
+    public ResponseEntity<ApiResponse<VisitResponse>> endVisit(@PathVariable("visitId") Long visitId) {
+        log.info("[POST] /api/visits/{}/end - 진료 종료", visitId);
+        VisitResponse result = VisitResponse.from(encounterService.endVisit(visitId));
+        return ResponseEntity.ok(new ApiResponse<>(true, "진료 종료 성공", result));
+    }
+
+    @GetMapping("/{visitId}/drug-search")
+    public ResponseEntity<ApiResponse<DrugSearchResult>> drugSearch(
+            @PathVariable("visitId") Long visitId,
+            @RequestParam(value = "itemName", required = false) String itemName,
+            @RequestParam(value = "itemSeq", required = false) String itemSeq,
+            @RequestParam(value = "pageNo", required = false) Integer pageNo,
+            @RequestParam(value = "numOfRows", required = false) Integer numOfRows) {
+        log.info("[GET] /api/visits/{}/drug-search - 진료 맥락 약품 검색", visitId);
+        encounterService.getVisit(visitId);
+        DrugSearchResult result = documentationService.searchDrugs(pageNo, numOfRows, itemName, itemSeq);
+        return ResponseEntity.ok(new ApiResponse<>(true, "약품 검색 성공", result));
+    }
+
+    @GetMapping("/{visitId}/procedure-search")
+    public ResponseEntity<ApiResponse<HiraProcedureSearchResult>> procedureSearch(
+            @PathVariable("visitId") Long visitId,
+            @RequestParam(value = "q", required = false) String q,
+            @RequestParam(value = "pageNo", required = false) Integer pageNo,
+            @RequestParam(value = "numOfRows", required = false) Integer numOfRows) {
+        log.info("[GET] /api/visits/{}/procedure-search - HIRA 진료수가 검색", visitId);
+        encounterService.getVisit(visitId);
+        String query = q != null ? q.trim() : "";
+        int p = pageNo != null && pageNo > 0 ? pageNo : 1;
+        int n = numOfRows != null && numOfRows > 0 ? Math.min(numOfRows, 100) : 20;
+        if (query.length() < 2) {
+            HiraProcedureSearchResult empty = HiraProcedureSearchResult.builder()
+                    .resultCode("00")
+                    .resultMsg("OK")
+                    .pageNo(p)
+                    .numOfRows(n)
+                    .totalCount(0)
+                    .items(java.util.List.of())
+                    .build();
+            return ResponseEntity.ok(new ApiResponse<>(true, "검색어 2자 이상 필요", empty));
+        }
+        try {
+            HiraProcedureSearchResult result = documentationService.searchProcedures(p, n, query);
+            return ResponseEntity.ok(new ApiResponse<>(true, "진료수가 검색 성공", result));
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(503)
+                    .body(new ApiResponse<>(false, ex.getMessage(), null));
+        }
+    }
+}

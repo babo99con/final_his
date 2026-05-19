@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.seoulit.reception.reservation.mapper.ReservationReceptionMapper">
+
+    <select id="selectReservations" resultType="kr.co.seoulit.reception.reservation.dto.ReservationReceptionDTO">
+        SELECT
+            rs.reservation_id,
+            rs.reservation_no,
+            rs.patient_id,
+            p.name AS patient_name,
+            rs.department_id,
+            d.department_name AS department_name,
+            rs.doctor_id,
+            doc.full_name AS doctor_name,
+            rs.reserved_at,
+            rs.status,
+            rs.note,
+            NVL(rs.is_active, 1) AS is_active,
+            rs.inactive_at,
+            rs.inactive_reason_code,
+            rs.inactive_reason_text,
+            rs.canceled_at,
+            rs.cancel_reason_code,
+            rs.cancel_reason_text,
+            rs.created_by,
+            rs.updated_by,
+            rs.created_at,
+            rs.updated_at
+        FROM RESERVATION rs
+        LEFT JOIN patient p ON p.patient_id = rs.patient_id
+        LEFT JOIN CMH.STAFF_DEPARTMENT d ON d.department_id = TO_CHAR(rs.department_id)
+        LEFT JOIN CMH.STAFF doc
+            ON doc.staff_id = TO_CHAR(rs.doctor_id)
+           AND doc.staff_id LIKE 'DOC-%'
+           AND UPPER(TRIM(NVL(doc.employment_status, 'ACTIVE'))) = 'ACTIVE'
+        <where>
+            1 = 1
+            <if test="searchValue != null and searchValue != ''">
+                <choose>
+                    <when test="searchType == 'reservationNo'">
+                        AND rs.reservation_no = #{searchValue}
+                    </when>
+                    <when test="searchType == 'patientId'">
+                        AND rs.patient_id = #{searchValue}
+                    </when>
+                    <when test="searchType == 'patientName'">
+                        AND p.name LIKE '%' || #{searchValue} || '%'
+                    </when>
+                    <when test="searchType == 'status'">
+                        AND rs.status = #{searchValue}
+                    </when>
+                </choose>
+            </if>
+        </where>
+        ORDER BY rs.reservation_id DESC
+    </select>
+
+    <select id="selectReservationById" resultType="kr.co.seoulit.reception.reservation.dto.ReservationReceptionDTO">
+        SELECT
+            rs.reservation_id,
+            rs.reservation_no,
+            rs.patient_id,
+            p.name AS patient_name,
+            rs.department_id,
+            d.department_name AS department_name,
+            rs.doctor_id,
+            doc.full_name AS doctor_name,
+            rs.reserved_at,
+            rs.status,
+            rs.note,
+            NVL(rs.is_active, 1) AS is_active,
+            rs.inactive_at,
+            rs.inactive_reason_code,
+            rs.inactive_reason_text,
+            rs.canceled_at,
+            rs.cancel_reason_code,
+            rs.cancel_reason_text,
+            rs.created_by,
+            rs.updated_by,
+            rs.created_at,
+            rs.updated_at
+        FROM RESERVATION rs
+        LEFT JOIN patient p ON p.patient_id = rs.patient_id
+        LEFT JOIN CMH.STAFF_DEPARTMENT d ON d.department_id = TO_CHAR(rs.department_id)
+        LEFT JOIN CMH.STAFF doc
+            ON doc.staff_id = TO_CHAR(rs.doctor_id)
+           AND doc.staff_id LIKE 'DOC-%'
+           AND UPPER(TRIM(NVL(doc.employment_status, 'ACTIVE'))) = 'ACTIVE'
+        WHERE rs.reservation_id = #{reservationId}
+    </select>
+
+</mapper>
+

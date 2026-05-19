@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.app.medical_support.nursingtreatment.mapper.TreatmentResultMapper">
+
+    <select id="searchTreatmentResult" resultType="com.app.medical_support.nursingtreatment.dto.TreatmentResultDTO">
+        SELECT
+            tr.treatment_result_id,
+            tr.procedure_result_id,
+            tr.status,
+            tr.progress_status,
+            tr.treatment_at,
+            tr.nursing_id,
+            tr.nurse_name,
+            tr.detail,
+            tr.patient_id,
+            tr.patient_name,
+            tr.department_name
+        FROM CHJ.TREATMENT_RESULT tr
+        <where>
+            <if test="patientName != null and patientName != ''">
+                AND tr.patient_name LIKE '%' || #{patientName} || '%'
+            </if>
+            <if test="departmentName != null and departmentName != ''">
+                AND tr.department_name LIKE '%' || #{departmentName} || '%'
+            </if>
+            <if test="progressStatus != null and progressStatus != ''">
+                AND UPPER(TRIM(tr.progress_status)) = UPPER(TRIM(#{progressStatus}))
+            </if>
+            <if test="startDate != null and startDate != ''">
+                AND tr.treatment_at <![CDATA[>=]]> TO_TIMESTAMP(#{startDate} || ' 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND tr.treatment_at <![CDATA[<=]]> TO_TIMESTAMP(#{endDate} || ' 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+        </where>
+        ORDER BY tr.treatment_at DESC NULLS LAST, tr.treatment_result_id DESC
+    </select>
+
+</mapper>

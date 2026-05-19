@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.staff.domain.employee.basicInfo.mapper.StaffMapper">
+
+    <select id="selectStaffById"
+            parameterType="string"
+            resultType="com.staff.domain.employee.basicInfo.dto.StaffResponseDTO">
+        SELECT
+            e.STAFF_ID         AS staffId,
+            e.DEPT_ID          AS deptId,
+            e.NAME             AS name,
+            e.PHONE            AS phone,
+            e.EMAIL            AS email,
+            e.BIRTH_DATE       AS birthDate,
+            e.GENDER_CODE      AS genderCode,
+            e.ZIP_CODE         AS zipCode,
+            e.ADDRESS1         AS address1,
+            e.ADDRESS2         AS address2,
+            e.STATUS           AS status,
+
+            d.DOCTOR_TYPE      AS doctorType,
+            d.SPECIALTY_ID     AS specialtyId,
+            d.PROFILE_SUMMARY  AS doctorProfileSummary,
+            d.DOCTOR_FILE_URL  AS doctorFileUrl,
+
+            n.NURSE_TYPE       AS nurseType
+        FROM JCH.EMPLOYEE e
+                 LEFT JOIN JCH.EMPLOYEE_DOCTOR d
+                           ON e.STAFF_ID = d.STAFF_ID
+                 LEFT JOIN JCH.EMPLOYEE_NURSE n
+                           ON e.STAFF_ID = n.STAFF_ID
+                 LEFT JOIN JCH.EMPLOYEE_RECEPTION r
+                           ON e.STAFF_ID = r.STAFF_ID
+        WHERE e.STAFF_ID = #{staffId}
+
+    </select>
+
+    <select id="selectStaffList"
+            resultType="com.staff.domain.employee.basicInfo.dto.StaffResponseDTO">
+        SELECT
+            e.STAFF_ID      AS staffId,
+            e.DEPT_ID       AS deptId,
+            e.NAME          AS name,
+            e.PHONE         AS phone,
+            e.EMAIL         AS email,
+            e.BIRTH_DATE    AS birthDate,
+            e.GENDER_CODE   AS genderCode,
+            e.ZIP_CODE      AS zipCode,
+            e.ADDRESS1      AS address1,
+            e.ADDRESS2      AS address2,
+            e.STATUS        AS status,
+
+            d.DOCTOR_TYPE   AS doctorType,
+            n.NURSE_TYPE    AS nurseType,
+            r.RECEPTION_TYPE AS receptionType
+
+        FROM JCH.EMPLOYEE e
+                 LEFT JOIN JCH.EMPLOYEE_DOCTOR d
+                           ON e.STAFF_ID = d.STAFF_ID
+                 LEFT JOIN JCH.EMPLOYEE_NURSE n
+                           ON e.STAFF_ID = n.STAFF_ID
+                 LEFT JOIN JCH.EMPLOYEE_RECEPTION r
+                           ON e.STAFF_ID = r.STAFF_ID
+        ORDER BY e.CREATED_AT DESC, e.STAFF_ID DESC
+    </select>
+
+
+    <!--검색 조회-->
+    <select id="searchStaffList"
+            parameterType="map"
+            resultType="com.staff.domain.employee.basicInfo.dto.StaffResponseDTO">
+
+        SELECT
+        e.STAFF_ID AS staffId,
+
+        e.DEPT_ID AS deptId,
+        e.NAME AS name,
+        e.PHONE AS phone,
+        e.EMAIL AS email,
+        e.BIRTH_DATE AS birthDate,
+        e.GENDER_CODE AS genderCode,
+        e.ZIP_CODE AS zipCode,
+        e.ADDRESS1 AS address1,
+        e.ADDRESS2 AS address2,
+        e.STATUS AS status,
+
+
+        d.DOCTOR_TYPE AS doctorType,
+        n.NURSE_TYPE AS nurseType,
+        r.RECEPTION_TYPE AS receptionType
+
+
+        FROM JCH.EMPLOYEE e
+
+        LEFT JOIN JCH.EMPLOYEE_DOCTOR d
+        ON  e.STAFF_ID = d.STAFF_ID
+
+        LEFT JOIN JCH.EMPLOYEE_NURSE n
+        ON e.STAFF_ID = n.STAFF_ID
+
+        LEFT JOIN JCH.EMPLOYEE_RECEPTION r
+        ON e.STAFF_ID = r.STAFF_ID
+
+        <where>
+            <choose>
+
+        <!-- 의사만 -->
+        <when test="searchType == 'doctorType'">
+            d.STAFF_ID IS NOT NULL
+        </when>
+
+        <!-- 간호사만 -->
+        <when test="searchType == 'nurseType'">
+            n.STAFF_ID IS NOT NULL
+        </when>
+
+         <!-- 원무 -->
+         <when test="searchType == 'receptionType'">
+         n.STAFF_ID IS NOT NULL
+         </when>
+
+
+
+
+        <!-- 이름 -->
+        <when test="searchType == 'name' and search != null and search != ''">
+            e.NAME LIKE '%' || #{search} || '%'
+        </when>
+
+        <!-- 사원번호 -->
+        <when test="searchType == 'staffId' and search != null and search != ''">
+            e.STAFF_ID LIKE '%' || #{search} || '%'
+        </when>
+
+        <!-- 부서 -->
+        <when test="searchType == 'dept' and search != null and search != ''">
+            e.DEPT_ID LIKE '%' || #{search} || '%'
+        </when>
+
+                <!-- 전체 -->
+                <when test="searchType == 'all' and search != null and search != ''">
+                    (
+                    e.NAME LIKE '%' || #{search} || '%'
+                    OR e.STAFF_ID LIKE '%' || #{search} || '%'
+                    OR e.DEPT_ID LIKE '%' || #{search} || '%'
+                    OR d.DOCTOR_TYPE LIKE '%' || #{search} || '%'
+                    OR n.NURSE_TYPE LIKE '%' || #{search} || '%'
+                    OR r.RECEPTION_TYPE LIKE '%' || #{search} || '%'
+                    )
+        </when>
+                </choose>
+
+        </where>
+
+        ORDER BY e.STAFF_ID DESC
+    </select>
+
+
+
+
+</mapper>

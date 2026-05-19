@@ -1,0 +1,66 @@
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+### Logs ###
+*.log
+logs/
+
+### Local scratch / temp (문서·스크립트 등 로컬 산출물) ###
+tmp/
+.tmp*/
+*.tmp
+*.temp
+
+### Gradle (로컬 캐시 변형) ###
+.gradle-local/
+
+### OS ###
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+### JVM dumps (로컬 디버깅) ###
+*.hprof
+
+### 로컬 전용 설정(비밀·환경값 — 필요 시 예시 파일만 커밋) ###
+application-local.yml
+application-local.yaml
+application-local.properties
+.env
+.env.*
+!.env.example

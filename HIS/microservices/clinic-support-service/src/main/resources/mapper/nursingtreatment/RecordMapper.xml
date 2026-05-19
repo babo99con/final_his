@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.app.medical_support.nursingtreatment.mapper.RecordMapper">
+
+    <select id="search" resultType="com.app.medical_support.nursingtreatment.dto.RecordResponseDTO">
+        SELECT
+            nr.record_id,
+            nr.reception_id,
+            nr.status,
+            nr.respiration,
+            nr.observation,
+            nr.systolic_bp,
+            nr.diastolic_bp,
+            nr.pulse,
+            nr.temperature,
+            nr.consciousness_level,
+            nr.spo2,
+            nr.nursing_id,
+            nr.initial_assessment,
+            nr.past_medical_history,
+            nr.nurse_name,
+            receipt_dept.department_name AS department_name,
+            p.name AS patient_name,
+            nr.height_cm,
+            nr.weight_kg,
+            nr.created_at
+        FROM CHJ.NURSING_RECORD nr
+        LEFT JOIN HOSPITAL.RECEPTION rc
+            ON nr.reception_id = rc.reception_id
+        LEFT JOIN CMH.STAFF_DEPARTMENT receipt_dept
+            ON receipt_dept.department_id = TO_CHAR(rc.department_id)
+        LEFT JOIN HOSPITAL.PATIENT p
+            ON rc.patient_id = p.patient_id
+        <where>
+            <choose>
+                <when test="searchType != null and searchType.equals('recordId')">
+                    nr.record_id = #{searchValue}
+                </when>
+                <when test="searchType != null and searchType.equals('receptionId') and searchValue != null and searchValue != ''">
+                    nr.reception_id = #{searchValue}
+                </when>
+                <when test="searchType != null and searchType.equals('nurseName') and searchValue != null and searchValue != ''">
+                    (nr.nurse_name LIKE '%' || #{searchValue} || '%'
+                    OR nr.nursing_id LIKE '%' || #{searchValue} || '%')
+                </when>
+                <when test="searchType != null and searchType.equals('patientName') and searchValue != null and searchValue != ''">
+                    p.name LIKE '%' || #{searchValue} || '%'
+                </when>
+                <when test="searchType != null and searchType.equals('departmentName') and searchValue != null and searchValue != ''">
+                    receipt_dept.department_name LIKE '%' || #{searchValue} || '%'
+                </when>
+                <when test="searchType != null and searchType.equals('createdAt') and startDate != null and endDate != null">
+                    nr.created_at BETWEEN
+                    TO_TIMESTAMP(#{startDate} || ' 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
+                    AND
+                    TO_TIMESTAMP(#{endDate} || ' 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+                </when>
+                <otherwise>
+                    1 = 0
+                </otherwise>
+            </choose>
+        </where>
+        ORDER BY nr.record_id DESC
+    </select>
+
+    <select id="findRecordList" resultType="com.app.medical_support.nursingtreatment.dto.RecordResponseDTO">
+        SELECT
+            nr.record_id,
+            nr.reception_id,
+            nr.created_at,
+            nr.respiration,
+            nr.status,
+            nr.observation,
+            nr.systolic_bp,
+            nr.diastolic_bp,
+            nr.pulse,
+            nr.temperature,
+            nr.consciousness_level,
+            nr.spo2,
+            nr.nursing_id,
+            nr.initial_assessment,
+            nr.past_medical_history,
+            nr.nurse_name,
+            receipt_dept.department_name AS department_name,
+            p.name AS patient_name,
+            nr.height_cm,
+            nr.weight_kg
+        FROM CHJ.NURSING_RECORD nr
+        LEFT JOIN HOSPITAL.RECEPTION rc
+            ON nr.reception_id = rc.reception_id
+        LEFT JOIN CMH.STAFF_DEPARTMENT receipt_dept
+            ON receipt_dept.department_id = TO_CHAR(rc.department_id)
+        LEFT JOIN HOSPITAL.PATIENT p
+            ON rc.patient_id = p.patient_id
+        ORDER BY nr.created_at DESC NULLS LAST, nr.record_id DESC
+    </select>
+
+    <select id="findRecordDetail" resultType="com.app.medical_support.nursingtreatment.dto.RecordResponseDTO">
+        SELECT
+            nr.record_id,
+            nr.reception_id,
+            nr.created_at,
+            nr.status,
+            nr.respiration,
+            nr.observation,
+            nr.systolic_bp,
+            nr.diastolic_bp,
+            nr.pulse,
+            nr.temperature,
+            nr.spo2,
+            nr.nursing_id,
+            nr.consciousness_level,
+            nr.initial_assessment,
+            nr.past_medical_history,
+            TO_CHAR(nr.updated_at, 'YYYY-MM-DD HH24:MI:SS') AS updated_at,
+            nr.height_cm,
+            nr.weight_kg,
+            nr.nurse_name,
+            receipt_dept.department_name AS department_name,
+            rc.patient_id AS patient_id,
+            p.name AS patient_name,
+            nr.pain_score
+        FROM CHJ.NURSING_RECORD nr
+        LEFT JOIN HOSPITAL.RECEPTION rc
+            ON nr.reception_id = rc.reception_id
+        LEFT JOIN CMH.STAFF_DEPARTMENT receipt_dept
+            ON receipt_dept.department_id = TO_CHAR(rc.department_id)
+        LEFT JOIN HOSPITAL.PATIENT p
+            ON rc.patient_id = p.patient_id
+        WHERE nr.record_id = #{recordId}
+    </select>
+
+</mapper>

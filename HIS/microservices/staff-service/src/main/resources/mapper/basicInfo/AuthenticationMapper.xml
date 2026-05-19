@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.staff.Nurse.mapper.nurseMapper">
+
+
+
+<!--    &lt;!&ndash;참조 상세테이블참조 (세션용)&ndash;&gt;-->
+<!--    &lt;!&ndash;해당 유저테이블에 생성유무를 FK로 참조 &ndash;&gt;-->
+<!--    <select id="selectAuthenticationIdByUserId"-->
+<!--            parameterType="long"-->
+<!--            resultType="long">-->
+<!--        SELECT authentication_id-->
+<!--        FROM MEMBER.member_authentication-->
+<!--        WHERE user_id = #{userId}-->
+<!--    </select>-->
+
+
+<!--    &lt;!&ndash; 단건조회용 &ndash;&gt;-->
+<!--    <select id="selectAuthByAuthenticationId" parameterType="long"-->
+<!--            resultType="com.staff.authentication.dto.AuthenticationResponseDTO">-->
+<!--        SELECT-->
+<!--        authentication_id AS authenticationId,-->
+<!--        user_id           AS userId,-->
+<!--        real_name         AS realName,-->
+<!--        phone             AS phone,-->
+<!--        email             AS email,-->
+<!--        birth_date        AS birthDate,-->
+<!--        sex               AS sex,-->
+<!--        zip_code          AS zipCode,-->
+<!--        address1          AS address1,-->
+<!--        address2          AS address2,-->
+<!--        nation_code       AS nationCode-->
+<!--        FROM member.member_authentication-->
+<!--        WHERE authentication_id = #{authenticationId}-->
+<!--    </select>-->
+
+
+
+    </mapper>

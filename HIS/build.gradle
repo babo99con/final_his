@@ -1,0 +1,56 @@
+plugins {
+    id "base"
+}
+
+description = "HMS monorepo root (composite build)."
+
+// Convenience tasks to invoke each service build from the monorepo root.
+tasks.register("authBuild") { dependsOn(":microservices:auth-service:build") }
+tasks.register("authTest") { dependsOn(":microservices:auth-service:test") }
+
+tasks.register("staffBuild") { dependsOn(":microservices:staff-service:build") }
+tasks.register("staffTest") { dependsOn(":microservices:staff-service:test") }
+
+tasks.register("patientBuild") { dependsOn(":microservices:patient-service:build") }
+tasks.register("patientTest") { dependsOn(":microservices:patient-service:test") }
+
+tasks.register("receptionBuild") { dependsOn(":microservices:reception-service:build") }
+tasks.register("receptionTest") { dependsOn(":microservices:reception-service:test") }
+
+tasks.register("clinicalBuild") { dependsOn(":microservices:clinical-service:build") }
+tasks.register("clinicalTest") { dependsOn(":microservices:clinical-service:test") }
+
+tasks.register("clinicSupportBuild") { dependsOn(":microservices:clinic-support-service:build") }
+tasks.register("clinicSupportTest") { dependsOn(":microservices:clinic-support-service:test") }
+
+tasks.register("billingBuild") { dependsOn(":microservices:billing-service:build") }
+tasks.register("billingTest") { dependsOn(":microservices:billing-service:test") }
+
+tasks.register("buildAll") {
+    group = "build"
+    description = "Build all services"
+    dependsOn(
+            "authBuild",
+            "staffBuild",
+            "patientBuild",
+            "receptionBuild",
+            "clinicalBuild",
+            "clinicSupportBuild",
+            "billingBuild"
+    )
+}
+
+tasks.register("testAll") {
+    group = "verification"
+    description = "Test all services"
+    dependsOn(
+            "authTest",
+            "staffTest",
+            "patientTest",
+            "receptionTest",
+            "clinicalTest",
+            "clinicSupportTest",
+            "billingTest"
+    )
+}
+

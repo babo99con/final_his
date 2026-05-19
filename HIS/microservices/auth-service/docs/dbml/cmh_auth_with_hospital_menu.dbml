@@ -1,0 +1,74 @@
+Table 역할 {
+  역할코드 varchar [pk, not null]
+  역할명 varchar [not null]
+  사용여부 char(1) [not null]
+  생성일시 datetime [not null]
+  수정일시 datetime
+}
+
+Table 사용자 {
+  사용자ID varchar [pk, not null, note: 'PL에서 생성하는 문자열 ID. 형식: 역할코드-연도-일련번호4자리. 예: A-2026-0001, D-2026-0002, N-2026-0003, R-2026-0004, T-2026-0005, S-2026-0010']
+  로그인아이디 varchar [not null, unique]
+  비밀번호해시 varchar [not null]
+  사용자명 varchar [not null]
+  역할코드 varchar [not null]
+  상태값 varchar [not null]
+  생성일시 datetime [not null]
+  수정일시 datetime
+}
+
+Table 역할메뉴권한 {
+  역할코드 varchar [not null]
+  메뉴ID int [not null]
+  조회권한여부 char(1) [not null]
+  등록권한여부 char(1) [not null]
+  수정권한여부 char(1) [not null]
+  삭제권한여부 char(1) [not null]
+
+  Indexes {
+    (역할코드, 메뉴ID) [pk]
+  }
+}
+
+Table 인증세션 {
+  세션ID varchar [pk, not null]
+  사용자ID varchar [not null]
+  액세스토큰식별자 varchar
+  로그인일시 datetime [not null]
+  마지막접속일시 datetime
+  만료일시 datetime [not null]
+  폐기여부 char(1) [not null]
+  폐기일시 datetime
+  생성일시 datetime [not null]
+  수정일시 datetime
+}
+
+Table 로그인이력 {
+  로그인이력ID int [pk, not null]
+  사용자ID varchar
+  로그인아이디 varchar [not null]
+  로그인결과 varchar [not null]
+  시도일시 datetime [not null]
+  클라이언트IP varchar
+  실패사유 varchar
+}
+
+Table 메뉴 {
+  메뉴ID int [pk, not null]
+  상위메뉴ID int
+  메뉴코드 varchar [not null]
+  메뉴명 varchar [not null]
+  메뉴경로 varchar
+  메뉴아이콘 varchar
+  정렬순서 int
+  사용여부 char(1) [not null]
+  생성일시 datetime
+  수정일시 datetime
+}
+
+Ref: 사용자.역할코드 > 역할.역할코드
+Ref: 역할메뉴권한.역할코드 > 역할.역할코드
+Ref: 역할메뉴권한.메뉴ID > 메뉴.메뉴ID
+Ref: 인증세션.사용자ID > 사용자.사용자ID
+Ref: 로그인이력.사용자ID > 사용자.사용자ID
+Ref: 메뉴.상위메뉴ID > 메뉴.메뉴ID

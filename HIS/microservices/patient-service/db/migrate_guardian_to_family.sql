@@ -1,0 +1,31 @@
+/*------------------------------------------------------------------------------
+-- 기존 GUARDIAN 데이터를 PATIENT_FAMILY로 이전
+-- PATIENT_FAMILY 테이블 생성 후 실행하세요.
+------------------------------------------------------------------------------*/
+
+INSERT INTO PATIENT_FAMILY (
+  FAMILY_ID,
+  PATIENT_ID,
+  RELATION,
+  FAMILY_NAME,
+  FAMILY_PHONE,
+  IS_PRIMARY,
+  SORT_ORDER
+)
+SELECT
+  PATIENT_FAMILY_SEQ.NEXTVAL,
+  p.PATIENT_ID,
+  NVL(p.GUARDIAN_RELATION, '기타'),
+  p.GUARDIAN_NAME,
+  p.GUARDIAN_PHONE,
+  CASE WHEN p.CONTACT_PRIORITY = 'GUARDIAN' THEN 1 ELSE 0 END,
+  1
+FROM PATIENT p
+WHERE p.GUARDIAN_NAME IS NOT NULL
+  AND TRIM(p.GUARDIAN_NAME) IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM PATIENT_FAMILY pf
+    WHERE pf.PATIENT_ID = p.PATIENT_ID
+  );
+
+COMMIT;

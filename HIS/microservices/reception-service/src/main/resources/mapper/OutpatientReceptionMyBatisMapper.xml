@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.seoulit.reception.outpatient.mapper.OutpatientReceptionMapper">
+
+    <select id="selectReceptions" resultType="kr.co.seoulit.reception.outpatient.dto.OutpatientReceptionDTO">
+        SELECT
+            r.reception_id,
+            r.reception_no,
+            r.patient_id,
+            p.name AS patient_name,
+            r.visit_type,
+            r.department_id,
+            d.department_name AS department_name,
+            r.doctor_id,
+            doc.full_name AS doctor_name,
+            r.reservation_id,
+            r.scheduled_at,
+            r.arrived_at,
+            r.status,
+            NVL(r.note, od.primary_symptom) AS note,
+            NVL(r.is_active, 1) AS is_active,
+            r.inactive_at,
+            r.inactive_reason_code,
+            r.inactive_reason_text,
+            r.cancel_reason_code,
+            r.cancel_reason_text,
+            r.hold_reason_code,
+            r.hold_reason_text,
+            TO_NUMBER(REGEXP_SUBSTR(TRIM(r.created_by), '^[0-9]+$')) AS created_by,
+            TO_NUMBER(REGEXP_SUBSTR(TRIM(r.updated_by), '^[0-9]+$')) AS updated_by,
+            r.created_at,
+            r.updated_at
+        FROM RECEPTION r
+        LEFT JOIN patient p ON p.patient_id = r.patient_id
+        LEFT JOIN CMH.STAFF_DEPARTMENT d ON d.department_id = TO_CHAR(r.department_id)
+        LEFT JOIN CMH.STAFF doc
+            ON doc.staff_id = TO_CHAR(r.doctor_id)
+           AND doc.staff_id LIKE 'DOC-%'
+           AND UPPER(TRIM(NVL(doc.employment_status, 'ACTIVE'))) = 'ACTIVE'
+        LEFT JOIN reception_outpatient_detail od
+            ON od.reception_id = r.reception_id
+           AND NVL(od.active_yn, 'Y') = 'Y'
+        <where>
+            <if test="searchValue != null and searchValue != ''">
+                <choose>
+                    <when test="searchType == 'receptionNo'">
+                        AND r.reception_no = #{searchValue}
+                    </when>
+                    <when test="searchType == 'patientId'">
+                        AND r.patient_id = #{searchValue}
+                    </when>
+                    <when test="searchType == 'patientName'">
+                        AND p.name LIKE '%' || #{searchValue} || '%'
+                    </when>
+                    <when test="searchType == 'status'">
+                        AND r.status = #{searchValue}
+                    </when>
+                </choose>
+            </if>
+            <if test="dateFrom != null and dateFrom != ''">
+                AND TRUNC(r.created_at) &gt;= TO_DATE(#{dateFrom}, 'YYYY-MM-DD')
+            </if>
+            <if test="dateTo != null and dateTo != ''">
+                AND TRUNC(r.created_at) &lt;= TO_DATE(#{dateTo}, 'YYYY-MM-DD')
+            </if>
+            <if test="departmentId != null and departmentId != ''">
+                AND TO_CHAR(r.department_id) = #{departmentId}
+            </if>
+            <if test="doctorId != null and doctorId != ''">
+                AND TO_CHAR(r.doctor_id) = #{doctorId}
+            </if>
+        </where>
+        ORDER BY r.reception_id
+    </select>
+
+    <select id="selectQueue" resultType="kr.co.seoulit.reception.outpatient.dto.OutpatientReceptionDTO">
+        SELECT
+            r.reception_id,
+            r.reception_no,
+            r.patient_id,
+            p.name AS patient_name,
+            r.visit_type,
+            r.department_id,
+            d.department_name AS department_name,
+            r.doctor_id,
+            doc.full_name AS doctor_name,
+            r.reservation_id,
+            r.scheduled_at,
+            r.arrived_at,
+            NVL(q.queue_status_cd, r.status) AS status,
+            NVL(r.note, od.primary_symptom) AS note,
+            NVL(r.is_active, 1) AS is_active,
+            r.inactive_at,
+            r.inactive_reason_code,
+            r.inactive_reason_text,
+            r.cancel_reason_code,
+            r.cancel_reason_text,
+            r.hold_reason_code,
+            r.hold_reason_text,
+            TO_NUMBER(REGEXP_SUBSTR(TRIM(r.created_by), '^[0-9]+$')) AS created_by,
+            TO_NUMBER(REGEXP_SUBSTR(TRIM(r.updated_by), '^[0-9]+$')) AS updated_by,
+            r.created_at,
+            r.updated_at
+        FROM RECEPTION_WAITING_QUEUE q
+        INNER JOIN RECEPTION r
+            ON r.reception_id = q.reception_id
+        LEFT JOIN patient p ON p.patient_id = r.patient_id
+        LEFT JOIN CMH.STAFF_DEPARTMENT d ON d.department_id = TO_CHAR(r.department_id)
+        LEFT JOIN CMH.STAFF doc
+            ON doc.staff_id = TO_CHAR(r.doctor_id)
+           AND doc.staff_id LIKE 'DOC-%'
+           AND UPPER(TRIM(NVL(doc.employment_status, 'ACTIVE'))) = 'ACTIVE'
+        LEFT JOIN reception_outpatient_detail od
+            ON od.reception_id = r.reception_id
+           AND NVL(od.active_yn, 'Y') = 'Y'
+        <where>
+            q.queue_status_cd IN ('WAITING', 'CALLED')
+            AND NVL(q.active_yn, 'Y') = 'Y'
+            <if test="departmentId != null and departmentId != ''">
+                AND TO_CHAR(r.department_id) = #{departmentId}
+            </if>
+            <if test="doctorId != null and doctorId != ''">
+                AND TO_CHAR(r.doctor_id) = #{doctorId}
+            </if>
+            <if test="date != null and date != ''">
+                AND TRUNC(r.created_at) = TO_DATE(#{date}, 'YYYY-MM-DD')
+            </if>
+        </where>
+        ORDER BY q.queue_order_no ASC, q.created_at ASC, r.reception_id ASC
+    </select>
+
+</mapper>
+
+
+

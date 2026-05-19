@@ -1,0 +1,21 @@
+FROM gradle:8.11-jdk21 AS builder
+WORKDIR /app
+
+# Copy only the files needed to build to keep the image small
+COPY build.gradle settings.gradle gradlew gradlew.bat ./
+COPY gradle gradle
+COPY src src
+
+RUN gradle bootWar --no-daemon
+
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends fonts-nanum \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /app/build/libs/*.war app.war
+
+EXPOSE 8081
+ENTRYPOINT ["java", "-jar", "/app/app.war"]

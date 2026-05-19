@@ -1,0 +1,508 @@
+package com.example.hospitalClinical.documentation.service;
+
+import com.example.hospitalClinical.common.code.CodeDetailEntity;
+import com.example.hospitalClinical.common.code.CodeDetailRepository;
+import com.example.hospitalClinical.common.exception.BusinessException;
+import com.example.hospitalClinical.common.exception.ErrorCode;
+import com.example.hospitalClinical.documentation.dto.DrugItemDto;
+import com.example.hospitalClinical.documentation.dto.DrugSearchResult;
+import com.example.hospitalClinical.documentation.dto.HiraProcedureSearchResult;
+import com.example.hospitalClinical.documentation.dto.HiraProcedureItemDto;
+import com.example.hospitalClinical.documentation.dto.StandardDiagnosisItemDto;
+import com.example.hospitalClinical.documentation.DiagnosisDxSource;
+import com.example.hospitalClinical.documentation.dto.SoapDxRequest;
+import com.example.hospitalClinical.documentation.dto.SoapDxResponse;
+import com.example.hospitalClinical.documentation.dto.SoapRxRequest;
+import com.example.hospitalClinical.documentation.dto.SoapRxResponse;
+import com.example.hospitalClinical.documentation.entity.Diagnosis;
+import com.example.hospitalClinical.documentation.entity.Note;
+import com.example.hospitalClinical.documentation.entity.SoapDx;
+import com.example.hospitalClinical.documentation.entity.SoapRx;
+import com.example.hospitalClinical.documentation.exception.NoteNotFoundException;
+import com.example.hospitalClinical.documentation.repository.DiagnosisRepo;
+import com.example.hospitalClinical.documentation.repository.NoteRepo;
+import com.example.hospitalClinical.documentation.repository.SoapDxRepo;
+import com.example.hospitalClinical.documentation.repository.SoapRxRepo;
+import com.example.hospitalClinical.encounter.repository.VisitRepo;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class DocumentationServiceImpl implements DocumentationService {
+
+    private final NoteRepo noteRepo;
+    private final DiagnosisRepo diagnosisRepo;
+    private final VisitRepo visitRepo;
+    private final SoapDxRepo soapDxRepo;
+    private final SoapRxRepo soapRxRepo;
+    private final CodeDetailRepository codeDetailRepository;
+
+    @Override
+    @Transactional
+    public Note createNote(Long visitId) {
+        if (!visitRepo.existsById(visitId)) {
+            throw new IllegalArgumentException("Visit not found: " + visitId);
+        }
+        return noteRepo.save(Note.create(visitId));
+    }
+
+    @Override
+    public Note getNote(Long noteId) {
+        return noteRepo.findById(noteId).orElseThrow(NoteNotFoundException::new);
+    }
+
+    @Override
+    public Note getNoteByVisitId(Long visitId) {
+        return noteRepo.findByVisitId(visitId).orElseThrow(NoteNotFoundException::new);
+    }
+
+    @Override
+    public Optional<Note> findNoteByVisitId(Long visitId) {
+        return noteRepo.findByVisitId(visitId);
+    }
+
+    @Override
+    public List<Note> listNotesByVisitId(Long visitId) {
+        return noteRepo.findByVisitIdOrderByCreatedAtDesc(visitId);
+    }
+
+    @Override
+    @Transactional
+    public Note updateNote(Long noteId, String chiefComplaint, String presentIllness, String memo, String status) {
+        Note n = getNote(noteId);
+        if (chiefComplaint != null) {
+            n.setChiefComplaint(chiefComplaint);
+        }
+        if (presentIllness != null) {
+            n.setPresentIllness(presentIllness);
+        }
+        if (memo != null) {
+            n.setMemo(memo);
+        }
+        if (status != null) {
+            n.setStatus(status);
+        }
+        return noteRepo.save(n);
+    }
+
+    @Override
+    @Transactional
+    public Diagnosis createDiagnosis(Long noteId, String patientCode, String diagnosisCode, String description) {
+        if (!noteRepo.existsById(noteId)) {
+            throw new NoteNotFoundException();
+        }
+        return diagnosisRepo.save(Diagnosis.create(noteId, patientCode, diagnosisCode, description));
+    }
+
+    @Override
+    public Diagnosis getDiagnosis(Long diagnosisId) {
+        return diagnosisRepo.findById(diagnosisId)
+                .orElseThrow(() -> new IllegalArgumentException("Diagnosis not found: " + diagnosisId));
+    }
+
+    @Override
+    public List<Diagnosis> listDiagnosisByNoteId(Long noteId) {
+        return diagnosisRepo.findByNoteIdOrderByCreatedAtDesc(noteId);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public DrugSearchResult searchDrugs(Integer pageNo, Integer numOfRows, String itemName, String itemSeq) {
+        int p = pageNo != null && pageNo > 0 ? pageNo : 1;
+        int n = numOfRows != null && numOfRows > 0 ? Math.min(numOfRows, 100) : 10;
+        PageRequest pageable = PageRequest.of(
+                p - 1,
+                n,
+                Sort.by(Sort.Order.asc("sortOrder"), Sort.Order.asc("codeName"), Sort.Order.asc("code"))
+        );
+
+        String nameQuery = StringUtils.hasText(itemName) ? itemName.trim() : null;
+        String codeQuery = StringUtils.hasText(itemSeq) ? itemSeq.trim() : null;
+        Page<CodeDetailEntity> page;
+        if (nameQuery == null && codeQuery == null) {
+            // 프론트에서 초기 로드/자동완성 시 빈 파라미터로 호출하는 경우가 있어,
+            // 빈 값이면 DRUG 그룹의 첫 페이지를 그대로 내려준다.
+            page = codeDetailRepository.findByGroupCodeAndIsActiveTrue("DRUG", pageable);
+        } else {
+            page = codeDetailRepository.searchActiveDrug("DRUG", nameQuery, codeQuery, pageable);
+        }
+
+        List<DrugItemDto> items = page.getContent().stream()
+                .map(c -> {
+                    DrugItemDto dto = new DrugItemDto();
+                    dto.setItemSeq(c.getCode());
+                    dto.setItemName(c.getCodeName());
+                    // 공공데이터 스키마의 나머지 필드는 로컬 마스터에서 관리하지 않으므로 비웁니다.
+                    dto.setEntpName(null);
+                    dto.setItemPermitDate(null);
+                    dto.setEfcyQesitm(null);
+                    dto.setUseMethodQesitm(null);
+                    dto.setAtpnWarnQesitm(null);
+                    dto.setAtpnQesitm(null);
+                    dto.setIntrcQesitm(null);
+                    dto.setSeQesitm(null);
+                    dto.setDepositMethodQesitm(null);
+                    dto.setOpenDe(null);
+                    dto.setUpdateDe(null);
+                    dto.setItemImage(null);
+                    return dto;
+                })
+                .toList();
+
+        return DrugSearchResult.builder()
+                .resultCode("00")
+                .resultMsg("OK")
+                .pageNo(p)
+                .numOfRows(n)
+                .totalCount((int) page.getTotalElements())
+                .items(items)
+                .build();
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public HiraProcedureSearchResult searchProcedures(int pageNo, int numOfRows, String korNmQuery) {
+        int p = pageNo > 0 ? pageNo : 1;
+        int n = numOfRows > 0 ? Math.min(numOfRows, 100) : 20;
+        String q = StringUtils.hasText(korNmQuery) ? korNmQuery.trim() : "";
+
+        if (q.isEmpty()) {
+            return HiraProcedureSearchResult.builder()
+                    .resultCode("00")
+                    .resultMsg("OK")
+                    .pageNo(p)
+                    .numOfRows(n)
+                    .totalCount(0)
+                    .items(List.of())
+                    .build();
+        }
+
+        PageRequest pageable = PageRequest.of(
+                p - 1,
+                n,
+                Sort.by(Sort.Order.asc("sortOrder"), Sort.Order.asc("codeName"), Sort.Order.asc("code"))
+        );
+        Page<CodeDetailEntity> page = codeDetailRepository.searchActive("TREAT", q, false, pageable);
+
+        List<HiraProcedureItemDto> items = page.getContent().stream()
+                .map(c -> HiraProcedureItemDto.builder()
+                        .mdfeeCd(c.getCode())
+                        .korNm(c.getCodeName())
+                        .mdfeeDivNo(c.getNote())
+                        .build())
+                .toList();
+
+        return HiraProcedureSearchResult.builder()
+                .resultCode("00")
+                .resultMsg("OK")
+                .pageNo(p)
+                .numOfRows(n)
+                .totalCount((int) page.getTotalElements())
+                .items(items)
+                .build();
+    }
+
+    @Override
+    public List<SoapDxResponse> listSoapDx(Long visitId) {
+        assertVisit(visitId);
+        return soapDxRepo.findByVisitIdOrderBySortOrderAscDiagnosisIdAsc(visitId).stream()
+                .map(SoapDxResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public SoapDxResponse addSoapDx(Long visitId, SoapDxRequest request) {
+        assertVisit(visitId);
+        boolean asMain = Boolean.TRUE.equals(request != null ? request.getMain() : null);
+        if (asMain) {
+            List<SoapDx> existing = soapDxRepo.findByVisitIdOrderBySortOrderAscDiagnosisIdAsc(visitId);
+            boolean hasMain = existing.stream().anyMatch(d -> "Y".equals(d.getMainYn()));
+            if (hasMain) {
+                throw new BusinessException(ErrorCode.INVALID_REQUEST, "이미 주상병이 있습니다.");
+            }
+        } else {
+            List<SoapDx> existing = soapDxRepo.findByVisitIdOrderBySortOrderAscDiagnosisIdAsc(visitId);
+            if (existing.isEmpty()) {
+                throw new BusinessException(ErrorCode.INVALID_REQUEST, "먼저 주상병을 등록하세요.");
+            }
+        }
+        int nextOrder = soapDxRepo.findByVisitIdOrderBySortOrderAscDiagnosisIdAsc(visitId).stream()
+                .mapToInt(SoapDx::getSortOrder)
+                .max()
+                .orElse(-1) + 1;
+        String code = request != null && request.getDxCode() != null ? request.getDxCode().trim() : null;
+        String name = request != null && request.getDxName() != null ? request.getDxName().trim() : null;
+        DiagnosisDxSource dxSource = resolveDiagnosisDxSource(request != null ? request.getDxSource() : null);
+        if (dxSource == DiagnosisDxSource.PUBLIC_MASTER) {
+            if (code == null || code.isEmpty() || name == null || name.isEmpty()) {
+                throw new BusinessException(
+                        ErrorCode.INVALID_REQUEST, "표준 상병은 상병기호와 상병명을 함께 등록해야 합니다.");
+            }
+        } else {
+            if (code == null || code.isEmpty() || name == null || name.isEmpty()) {
+                throw new BusinessException(ErrorCode.INVALID_REQUEST, "보조 입력은 상병기호와 상병명을 모두 입력하세요.");
+            }
+        }
+        if (asMain) {
+            soapDxRepo.findByVisitIdOrderBySortOrderAscDiagnosisIdAsc(visitId)
+                    .forEach(d -> d.setMainYn("N"));
+        }
+        SoapDx saved = soapDxRepo.save(
+                SoapDx.create(
+                        visitId, emptyToNull(code), emptyToNull(name), asMain, nextOrder, dxSource));
+        return SoapDxResponse.from(saved);
+    }
+
+    @Override
+    @Transactional
+    public void removeSoapDx(Long visitId, Long diagnosisId) {
+        assertVisit(visitId);
+        SoapDx d = soapDxRepo.findByDiagnosisIdAndVisitId(diagnosisId, visitId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST, "상병을 찾을 수 없습니다."));
+        soapDxRepo.delete(d);
+    }
+
+    @Override
+    @Transactional
+    public SoapDxResponse setMainSoapDx(Long visitId, Long diagnosisId) {
+        assertVisit(visitId);
+        SoapDx target = soapDxRepo.findByDiagnosisIdAndVisitId(diagnosisId, visitId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST, "상병을 찾을 수 없습니다."));
+        soapDxRepo.findByVisitIdOrderBySortOrderAscDiagnosisIdAsc(visitId)
+                .forEach(d -> d.setMainYn("N"));
+        target.setMainYn("Y");
+        return SoapDxResponse.from(soapDxRepo.save(target));
+    }
+
+    @Override
+    @Transactional
+    public void reorderSoapDx(Long visitId, List<Long> diagnosisIds) {
+        assertVisit(visitId);
+        if (diagnosisIds == null || diagnosisIds.isEmpty()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "순서 목록이 비었습니다.");
+        }
+        if (new HashSet<>(diagnosisIds).size() != diagnosisIds.size()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "상병 ID가 중복되었습니다.");
+        }
+        List<SoapDx> rows = soapDxRepo.findByVisitIdOrderBySortOrderAscDiagnosisIdAsc(visitId);
+        if (rows.size() != diagnosisIds.size()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "상병 개수가 일치하지 않습니다.");
+        }
+        var idSet = new HashSet<Long>();
+        for (SoapDx r : rows) {
+            idSet.add(r.getDiagnosisId());
+        }
+        for (Long id : diagnosisIds) {
+            if (!idSet.contains(id)) {
+                throw new BusinessException(ErrorCode.INVALID_REQUEST, "잘못된 상병 ID가 포함되었습니다.");
+            }
+        }
+        for (int i = 0; i < diagnosisIds.size(); i++) {
+            Long id = diagnosisIds.get(i);
+            SoapDx d = rows.stream()
+                    .filter(x -> x.getDiagnosisId().equals(id))
+                    .findFirst()
+                    .orElseThrow();
+            d.setSortOrder(i);
+        }
+    }
+
+    @Override
+    public List<SoapRxResponse> listSoapRx(Long visitId) {
+        assertVisit(visitId);
+        return soapRxRepo.findByVisitIdOrderByPrescriptionIdAsc(visitId).stream()
+                .map(SoapRxResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public Long saveSoapPrescriptionRow(
+            Long visitId, String medicationName, String dosage, String frequency, String days) {
+        assertVisit(visitId);
+        if (medicationName == null || medicationName.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "약품명을 입력하세요.");
+        }
+        SoapRx saved =
+                soapRxRepo.save(
+                        SoapRx.create(
+                                visitId,
+                                medicationName.trim(),
+                                trimToNull(dosage),
+                                trimToNull(frequency),
+                                trimToNull(days)));
+        return saved.getPrescriptionId();
+    }
+
+    @Override
+    @Transactional
+    public SoapRxResponse addSoapRx(Long visitId, SoapRxRequest request) {
+        assertVisit(visitId);
+        String name = request != null && request.getMedicationName() != null
+                ? request.getMedicationName().trim()
+                : "";
+        if (name.isEmpty()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "약품명을 입력하세요.");
+        }
+        Long id =
+                saveSoapPrescriptionRow(
+                        visitId,
+                        name,
+                        request != null ? request.getDosage() : null,
+                        request != null ? request.getFrequency() : null,
+                        request != null ? request.getDays() : null);
+        return SoapRxResponse.from(
+                soapRxRepo.findById(id).orElseThrow(() -> new IllegalStateException("SoapRx not found id=" + id)));
+    }
+
+    @Override
+    @Transactional
+    public void removeSoapRx(Long visitId, Long prescriptionId) {
+        assertVisit(visitId);
+        SoapRx p = soapRxRepo
+                .findByPrescriptionIdAndVisitId(prescriptionId, visitId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST, "처방을 찾을 수 없습니다."));
+        soapRxRepo.delete(p);
+    }
+
+    @Override
+    @Transactional
+    public void updateSoapRx(
+            Long visitId,
+            Long prescriptionId,
+            String medicationName,
+            String dosage,
+            String frequency,
+            String days) {
+        assertVisit(visitId);
+        SoapRx p = soapRxRepo
+                .findByPrescriptionIdAndVisitId(prescriptionId, visitId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST, "처방을 찾을 수 없습니다."));
+        if (medicationName != null) {
+            String name = medicationName.trim();
+            if (name.isEmpty()) {
+                throw new BusinessException(ErrorCode.INVALID_REQUEST, "약품명을 입력하세요.");
+            }
+            p.setMedicationName(name);
+        }
+        if (dosage != null) {
+            p.setDosage(trimToNull(dosage));
+        }
+        if (frequency != null) {
+            p.setFrequency(trimToNull(frequency));
+        }
+        if (days != null) {
+            p.setDays(trimToNull(days));
+        }
+        soapRxRepo.save(p);
+    }
+
+    @Override
+    @Transactional
+    public void replaceSoapPrescriptionFromOrder(
+            Long visitId,
+            Long prescriptionId,
+            String medicationName,
+            String dosage,
+            String frequency,
+            String days) {
+        assertVisit(visitId);
+        SoapRx p = soapRxRepo
+                .findByPrescriptionIdAndVisitId(prescriptionId, visitId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST, "처방을 찾을 수 없습니다."));
+        if (medicationName != null) {
+            String name = medicationName.trim();
+            if (!name.isEmpty()) {
+                p.setMedicationName(name);
+            }
+        }
+        p.setDosage(trimToNull(dosage));
+        p.setFrequency(trimToNull(frequency));
+        p.setDays(trimToNull(days));
+        soapRxRepo.save(p);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public List<StandardDiagnosisItemDto> searchStandardDiagnosisMasters(String query, Integer pageNo,
+                                                                         Integer numOfRows, String diseaseType) {
+        if (!StringUtils.hasText(query)) {
+            return List.of();
+        }
+        int p = pageNo != null && pageNo > 0 ? pageNo : 1;
+        int n = numOfRows != null && numOfRows > 0 ? Math.min(numOfRows, 100) : 20;
+        String dt = normalizeDiseaseType(diseaseType);
+        boolean searchByCode = "SICK_CD".equals(dt);
+        String q = query.trim();
+
+        PageRequest pageable = PageRequest.of(
+                p - 1,
+                n,
+                Sort.by(Sort.Order.asc("sortOrder"), Sort.Order.asc("codeName"), Sort.Order.asc("code"))
+        );
+        Page<CodeDetailEntity> page = codeDetailRepository.searchActive("DISEASE", q, searchByCode, pageable);
+
+        return page.getContent().stream()
+                .map(c -> new StandardDiagnosisItemDto(c.getCode(), c.getCodeName()))
+                .toList();
+    }
+
+    private static String normalizeDiseaseType(String diseaseType) {
+        if (!StringUtils.hasText(diseaseType)) {
+            return "SICK_NM";
+        }
+        String u = diseaseType.trim().toUpperCase();
+        if ("SICK_CD".equals(u) || "SICK_NM".equals(u)) {
+            return u;
+        }
+        return "SICK_NM";
+    }
+
+    private void assertVisit(Long visitId) {
+        if (visitId == null) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "visitId가 필요합니다.");
+        }
+        if (!visitRepo.existsById(visitId)) {
+            throw new BusinessException(ErrorCode.VISIT_NOT_FOUND);
+        }
+    }
+
+    private static DiagnosisDxSource resolveDiagnosisDxSource(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return DiagnosisDxSource.MANUAL;
+        }
+        if ("PUBLIC_MASTER".equalsIgnoreCase(raw.trim())) {
+            return DiagnosisDxSource.PUBLIC_MASTER;
+        }
+        return DiagnosisDxSource.MANUAL;
+    }
+
+    private static String emptyToNull(String s) {
+        if (s == null || s.isEmpty()) {
+            return null;
+        }
+        return s;
+    }
+
+    private static String trimToNull(String s) {
+        if (s == null) {
+            return null;
+        }
+        String t = s.trim();
+        return t.isEmpty() ? null : t;
+    }
+}

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.staff.Nurse.mapper.nurseMapper">
+
+
+
+<!--    &lt;!&ndash; 게시글에 속한 파일 조회 (상세 화면용) &ndash;&gt;-->
+<!--    <select id="selectFilesByPostId"-->
+<!--            parameterType="long"-->
+<!--            resultType="com.staff.board.dto.file.FileResDTO">-->
+<!--        SELECT-->
+<!--            file_id      AS fileId,-->
+<!--            post_id      AS postId,-->
+<!--            file_url     AS fileUrl,-->
+<!--            sort_order   AS sortOrder,-->
+<!--            content_type AS contentType,-->
+<!--            file_size    AS fileSize-->
+<!--        FROM board_file-->
+<!--        WHERE post_id = #{postId}-->
+<!--        ORDER BY sort_order ASC-->
+<!--    </select>-->
+
+
+<!--    <insert id="insertFiles">-->
+<!--        <if test="files != null and files.size() > 0">-->
+<!--        INSERT ALL-->
+<!--        <foreach collection="files" item="file">-->
+<!--            INTO board_file (-->
+<!--            file_id,-->
+<!--            post_id,-->
+<!--            file_url,-->
+<!--            sort_order-->
+<!--            ) VALUES (-->
+<!--            SEQ_BOARD_FILE_ID.NEXTVAL,-->
+<!--            #{postId},-->
+<!--            #{file.fileUrl},-->
+<!--            #{file.sortOrder}-->
+<!--            )-->
+<!--        </foreach>-->
+<!--        SELECT 1 FROM DUAL-->
+<!--        </if>-->
+<!--    </insert>-->
+
+</mapper>

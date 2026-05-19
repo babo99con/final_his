@@ -1,0 +1,21 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "hms-monorepo"
+
+// MSA-style layout (microservices/*).
+include(
+        ":util",
+        ":microservices:auth-service",
+        ":microservices:staff-service",
+        ":microservices:patient-service",
+        ":microservices:reception-service",
+        ":microservices:clinical-service",
+        ":microservices:clinic-support-service",
+        ":microservices:billing-service"
+)
+

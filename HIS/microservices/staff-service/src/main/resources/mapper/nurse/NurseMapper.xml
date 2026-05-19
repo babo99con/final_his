@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.staff.domain.employee.nurse.mapper.NurseMapper">
+
+    <!--조회-->
+    <select id="selectNurseById" parameterType="string" resultType="com.staff.domain.employee.nurse.dto.NurseResponseDTO">
+        SELECT n.STAFF_ID AS staffId,
+               e.DEPT_ID AS deptId,
+               e.NAME AS name,
+               e.PHONE AS phone,
+               e.EMAIL AS email,
+               e.BIRTH_DATE AS birthDate,
+               e.GENDER_CODE AS genderCode,
+               e.ZIP_CODE AS zipCode,
+               e.ADDRESS1 AS address1,
+               e.ADDRESS2 AS address2,
+               e.STATUS AS status,
+
+
+               n.LICENSE_NO AS licenseNo,
+               n.NURSE_TYPE AS nurseType,
+               n.SHIFT_TYPE AS shiftType,
+               n.NURSE_FILE_URL AS nurseFileUrl,
+               n.EDUCATION AS education,
+               n.CAREER_DETAIL AS careerDetail,
+               n.EXT_NO AS extNo
+        FROM JCH.EMPLOYEE_NURSE n JOIN JCH.EMPLOYEE e ON e.STAFF_ID = n.STAFF_ID WHERE n.STAFF_ID = #{staffId}
+    </select>
+
+    <!--단건 조회-->
+    <select id="selectNurseList" resultType="com.staff.domain.employee.nurse.dto.NurseResponseDTO">
+        SELECT n.STAFF_ID AS staffId,
+        e.DEPT_ID AS deptId,
+        e.NAME AS name,
+        e.PHONE AS phone,
+        e.EMAIL AS email,
+        e.BIRTH_DATE AS birthDate,
+        e.GENDER_CODE AS genderCode,
+        e.ZIP_CODE AS zipCode,
+        e.ADDRESS1 AS address1,
+        e.ADDRESS2 AS address2,
+        e.STATUS AS status,
+
+
+        n.LICENSE_NO AS licenseNo,
+        n.NURSE_TYPE AS nurseType,
+        n.SHIFT_TYPE AS shiftType,
+        n.NURSE_FILE_URL AS nurseFileUrl,
+        n.EDUCATION AS education,
+        n.CAREER_DETAIL AS careerDetail,
+        n.EXT_NO AS extNo
+
+        FROM JCH.EMPLOYEE_NURSE n
+                 JOIN JCH.EMPLOYEE e
+                      ON e.STAFF_ID = n.STAFF_ID
+
+    </select>
+
+    <!--검색 조회-->
+    <select id="searchNurseList"
+            parameterType="map"
+            resultType="com.staff.domain.employee.nurse.dto.NurseResponseDTO">
+
+        SELECT
+        n.STAFF_ID AS staffId,
+        e.DEPT_ID AS deptId,
+        e.NAME AS name,
+        e.PHONE AS phone,
+        e.EMAIL AS email,
+        e.BIRTH_DATE AS birthDate,
+        e.GENDER_CODE AS genderCode,
+        e.ZIP_CODE AS zipCode,
+        e.ADDRESS1 AS address1,
+        e.ADDRESS2 AS address2,
+        e.STATUS AS status,
+
+        n.LICENSE_NO AS licenseNo,
+        n.NURSE_TYPE AS nurseType,
+        n.SHIFT_TYPE AS shiftType,
+        n.NURSE_FILE_URL AS nurseFileUrl,
+        n.EDUCATION AS education,
+        n.CAREER_DETAIL AS careerDetail,
+        n.EXT_NO AS extNo
+        FROM JCH.EMPLOYEE_NURSE n
+        JOIN JCH.EMPLOYEE e
+        ON e.STAFF_ID = n.STAFF_ID
+
+        <where>
+            <if test="search != null and search != ''">
+                <choose>
+                    <!-- 이름 -->
+                    <when test="searchType == 'name'">
+                        e.NAME LIKE '%' || #{search} || '%'
+                    </when>
+
+                    <!-- 사원번호 -->
+                    <when test="searchType == 'staffId'">
+                        n.STAFF_ID LIKE '%' || #{search} || '%'
+                    </when>
+
+                    <!-- 부서 -->
+                    <when test="searchType == 'dept'">
+                        e.DEPT_ID LIKE '%' || #{search} || '%'
+                    </when>
+
+                    <!-- 근무타입 -->
+                    <when test="searchType == 'shiftType'">
+                        n.SHIFT_TYPE LIKE '%' || #{search} || '%'
+                    </when>
+
+                    <!-- 사내번호 -->
+                    <when test="searchType == 'extNo'">
+                        n.EXT_NO LIKE '%' || #{search} || '%'
+                    </when>
+
+                    <!-- 전체 -->
+                    <otherwise>
+                        (
+                        e.NAME LIKE '%' || #{search} || '%'
+                        OR n.STAFF_ID LIKE '%' || #{search} || '%'
+                        OR e.DEPT_ID LIKE '%' || #{search} || '%'
+                        OR n.SHIFT_TYPE LIKE '%' || #{search} || '%'
+                        OR n.EXT_NO LIKE '%' || #{search} || '%'
+                        )
+                    </otherwise>
+                </choose>
+            </if>
+        </where>
+
+        ORDER BY n.STAFF_ID DESC
+    </select>
+</mapper>

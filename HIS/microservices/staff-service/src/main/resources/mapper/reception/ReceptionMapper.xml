@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.staff.domain.employee.reception.mapper.ReceptionMapper">
+
+    <select id="selectReceptionById" parameterType="string" resultType="com.staff.domain.employee.reception.dto.ReceptionResponseDTO">
+        SELECT r.STAFF_ID AS staffId,
+               e.DEPT_ID AS deptId,
+               e.NAME AS name,
+               e.PHONE AS phone,
+               e.EMAIL AS email,
+               e.BIRTH_DATE AS birthDate,
+               e.GENDER_CODE AS genderCode,
+               e.ZIP_CODE AS zipCode,
+               e.ADDRESS1 AS address1,
+               e.ADDRESS2 AS address2,
+               e.STATUS AS status,
+
+
+               r.JOB_TYPE_CD AS jobTypeCd,
+               r.DESK_NO AS deskNo,
+               r.SHIFT_TYPE AS shiftType,
+               TO_CHAR(r.START_DATE, 'YYYY-MM-DD') AS startDate,
+               r.WINDOW_AREA AS windowArea,
+               r.MULTI_TASK AS multiTask,
+               r.RMK AS rmk,
+               r.RECEPTION_TYPE AS receptionType,
+               r.EXT_NO AS extNo
+          FROM JCH.EMPLOYEE_RECEPTION r
+          JOIN JCH.EMPLOYEE e
+            ON e.STAFF_ID = r.STAFF_ID
+         WHERE r.STAFF_ID = #{staffId}
+    </select>
+
+    <select id="selectReceptionList" resultType="com.staff.domain.employee.reception.dto.ReceptionResponseDTO">
+        SELECT r.STAFF_ID AS staffId,
+               e.DEPT_ID AS deptId,
+               e.NAME AS name,
+               e.PHONE AS phone,
+               e.EMAIL AS email,
+               e.BIRTH_DATE AS birthDate,
+               e.GENDER_CODE AS genderCode,
+               e.ZIP_CODE AS zipCode,
+               e.ADDRESS1 AS address1,
+               e.ADDRESS2 AS address2,
+               e.STATUS AS status,
+
+
+               r.JOB_TYPE_CD AS jobTypeCd,
+               r.DESK_NO AS deskNo,
+               r.SHIFT_TYPE AS shiftType,
+               TO_CHAR(r.START_DATE, 'YYYY-MM-DD') AS startDate,
+               r.WINDOW_AREA AS windowArea,
+               r.MULTI_TASK AS multiTask,
+               r.RMK AS rmk,
+               r.RECEPTION_TYPE AS receptionType,
+               r.EXT_NO AS extNo
+          FROM JCH.EMPLOYEE_RECEPTION r
+          JOIN JCH.EMPLOYEE e
+            ON e.STAFF_ID = r.STAFF_ID
+    </select>
+
+    <select id="searchReceptionList"
+            parameterType="map"
+            resultType="com.staff.domain.employee.reception.dto.ReceptionResponseDTO">
+        SELECT r.STAFF_ID AS staffId,
+               e.DEPT_ID AS deptId,
+               e.NAME AS name,
+               e.PHONE AS phone,
+               e.EMAIL AS email,
+               e.BIRTH_DATE AS birthDate,
+               e.GENDER_CODE AS genderCode,
+               e.ZIP_CODE AS zipCode,
+               e.ADDRESS1 AS address1,
+               e.ADDRESS2 AS address2,
+               e.STATUS AS status,
+
+
+               r.JOB_TYPE_CD AS jobTypeCd,
+               r.DESK_NO AS deskNo,
+               r.SHIFT_TYPE AS shiftType,
+               TO_CHAR(r.START_DATE, 'YYYY-MM-DD') AS startDate,
+               r.WINDOW_AREA AS windowArea,
+               r.MULTI_TASK AS multiTask,
+               r.RMK AS rmk,
+               r.RECEPTION_TYPE AS receptionType,
+               r.EXT_NO AS extNo
+          FROM JCH.EMPLOYEE_RECEPTION r
+          JOIN JCH.EMPLOYEE e
+            ON e.STAFF_ID = r.STAFF_ID
+        <where>
+            <if test="search != null and search != ''">
+                <choose>
+                    <when test="searchType == 'name'">
+                        e.NAME LIKE '%' || #{search} || '%'
+                    </when>
+                    <when test="searchType == 'staffId'">
+                        r.STAFF_ID LIKE '%' || #{search} || '%'
+                    </when>
+                    <when test="searchType == 'dept'">
+                        e.DEPT_ID LIKE '%' || #{search} || '%'
+                    </when>
+                    <when test="searchType == 'shiftType'">
+                        r.SHIFT_TYPE LIKE '%' || #{search} || '%'
+                    </when>
+                    <when test="searchType == 'jobTypeCd'">
+                        r.JOB_TYPE_CD LIKE '%' || #{search} || '%'
+                    </when>
+                    <when test="searchType == 'extNo'">
+                        r.EXT_NO LIKE '%' || #{search} || '%'
+                    </when>
+                    <when test="searchType == 'receptionType'">
+                        r.RECEPTION_TYPE LIKE '%' || #{search} || '%'
+                    </when>
+                    <otherwise>
+                        (
+                            e.NAME LIKE '%' || #{search} || '%'
+                            OR r.STAFF_ID LIKE '%' || #{search} || '%'
+                            OR e.DEPT_ID LIKE '%' || #{search} || '%'
+                            OR r.SHIFT_TYPE LIKE '%' || #{search} || '%'
+                            OR r.JOB_TYPE_CD LIKE '%' || #{search} || '%'
+                            OR r.RECEPTION_TYPE LIKE '%' || #{search} || '%'
+                            OR r.EXT_NO LIKE '%' || #{search} || '%'
+                        )
+                    </otherwise>
+                </choose>
+            </if>
+        </where>
+        ORDER BY r.STAFF_ID DESC
+    </select>
+</mapper>

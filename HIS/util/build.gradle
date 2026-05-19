@@ -1,0 +1,30 @@
+plugins {
+    id 'java-library'
+}
+
+group = 'com.hms.util'
+version = '1.0.0-SNAPSHOT'
+
+java {
+    toolchain {
+        // Keep compatible with the majority of HIS services.
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Intentionally keep this module dependency-light (no Spring) to avoid
+    // version alignment issues across services on different Spring Boot majors.
+    // jackson-annotations only (for @JsonIgnoreProperties/@JsonAlias) so services can
+    // deserialize ApiResponse across different response shapes (e.g., result vs data).
+    api 'com.fasterxml.jackson.core:jackson-annotations:2.19.2'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+

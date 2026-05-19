@@ -1,0 +1,195 @@
+spring:
+  application:
+    name: hospital_clinical
+  profiles:
+    default: local
+  jpa:
+    open-in-view: false
+  cloud:
+    stream:
+      defaultBinder: kafka
+      default:
+        contentType: application/json
+      bindings:
+        output-medicationRecord-out-0:
+          destination: medicationRecord
+        output-treatmentResult-out-0:
+          destination: treatmentResult
+        output-testExecution-out-0:
+          destination: testExecution
+        output-clinicalCompleted-out-0:
+          destination: his.clinical.visit-completed
+      kafka:
+        binder:
+          brokers: ${KAFKA_BROKERS:localhost}
+          defaultBrokerPort: ${KAFKA_BROKER_PORT:9092}
+
+reception:
+  api:
+    base-url: ${RECEPTION_API_BASE_URL:http://localhost:8283}
+
+clinical-support:
+  order:
+    enabled: ${CLINICAL_SUPPORT_ORDER_ENABLED:true}
+  api:
+    enabled: ${CLINICAL_SUPPORT_API_ENABLED:true}
+    base-url: ${CLINICAL_SUPPORT_API_BASE_URL:http://localhost:8189}
+    execution-list-cache-ttl-ms: ${CLINICAL_SUPPORT_EXECUTION_LIST_CACHE_TTL_MS:5000}
+
+billing:
+  api:
+    base-url: ${BILLING_API_BASE_URL:http://localhost:8081}
+    enabled: ${BILLING_API_ENABLED:true}
+  kafka:
+    clinical-completed:
+      enabled: ${BILLING_KAFKA_CLINICAL_COMPLETED_ENABLED:true}
+
+hira:
+  api:
+    base-url: ${HIRA_API_BASE_URL:http://apis.data.go.kr}
+    service-key: ${HIRA_API_KEY:}
+
+drug:
+  api:
+    base-url: http://apis.data.go.kr
+    service-key: "${DRUG_API_KEY}"
+
+disease:
+  api:
+    base-url: http://apis.data.go.kr
+    service-key: "${DISEASE_API_KEY}"
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+  mapper-locations: classpath:/mapper/**/*.xml
+
+app:
+  migration:
+    soap-rx-to-order:
+      enabled: ${SOAP_RX_TO_ORDER_MIGRATION:false}
+  stale-visit-auto-close:
+    enabled: ${STALE_VISIT_AUTO_CLOSE_ENABLED:true}
+    cron: ${STALE_VISIT_AUTO_CLOSE_CRON:0 5 0 * * *}
+    zone: ${STALE_VISIT_AUTO_CLOSE_ZONE:Asia/Seoul}
+  test-result-ready:
+    kafka:
+      enabled: ${APP_TEST_RESULT_READY_KAFKA_ENABLED:false}
+      topic: ${APP_TEST_RESULT_READY_KAFKA_TOPIC:test-result-ready}
+      group-id: ${APP_TEST_RESULT_READY_KAFKA_GROUP_ID:hospital-clinical-test-result-ready}
+      bootstrap-servers: ${APP_TEST_RESULT_READY_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  support-feedback:
+    kafka:
+      enabled: ${APP_SUPPORT_FEEDBACK_KAFKA_ENABLED:true}
+      bootstrap-servers: ${APP_SUPPORT_FEEDBACK_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+      group-id: ${APP_SUPPORT_FEEDBACK_KAFKA_GROUP_ID:hospital-clinical-support-feedback}
+      topic-medication: ${APP_SUPPORT_FEEDBACK_TOPIC_MEDICATION:medicationRecordOutcome}
+      topic-treatment: ${APP_SUPPORT_FEEDBACK_TOPIC_TREATMENT:treatmentResultOutcome}
+      topic-test-execution: ${APP_SUPPORT_FEEDBACK_TOPIC_TEST_EXECUTION:testExecution}
+
+---
+spring:
+  datasource:
+    url: jdbc:oracle:thin:@//localhost:1521/xepdb1
+    username: ssh
+    password: ${PASSWORD:-changeme}
+    driver-class-name: oracle.jdbc.OracleDriver
+    hikari:
+      maximum-pool-size: ${LOCAL_DB_POOL_MAX:3}
+      minimum-idle: 0
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    database-platform: org.hibernate.dialect.OracleDialect
+    properties:
+      hibernate:
+        format_sql: true
+        boot:
+          allow_jdbc_metadata_access: false
+
+server:
+  port: ${SERVER_PORT:8090}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: ${DEV_DB_URL}
+    username: ${DEV_DB_USERNAME}
+    password: ${DEV_DB_PASSWORD}
+    driver-class-name: oracle.jdbc.OracleDriver
+    hikari:
+      maximum-pool-size: ${DEV_DB_POOL_MAX:3}
+      minimum-idle: 0
+      connection-timeout: 20000
+  jpa:
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:none}
+    show-sql: false
+    database-platform: org.hibernate.dialect.OracleDialect
+    properties:
+      hibernate:
+        default_schema: SSH
+        boot:
+          allow_jdbc_metadata_access: false
+
+server:
+  port: ${SERVER_PORT:8090}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev-h2
+  datasource:
+    url: jdbc:h2:mem:hospital_clinical;MODE=Oracle;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    driver-class-name: org.h2.Driver
+    hikari:
+      maximum-pool-size: 2
+      minimum-idle: 0
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    database-platform: org.hibernate.dialect.H2Dialect
+
+server:
+  port: ${SERVER_PORT:8090}
+
+app:
+  stale-visit-auto-close:
+    enabled: false
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: oracle.jdbc.OracleDriver
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX:5}
+      minimum-idle: ${DB_POOL_MIN_IDLE:1}
+      connection-timeout: 20000
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    database-platform: org.hibernate.dialect.OracleDialect
+    properties:
+      hibernate:
+        default_schema: SSH
+        boot:
+          allow_jdbc_metadata_access: false
+
+server:
+  port: ${SERVER_PORT:8080}
