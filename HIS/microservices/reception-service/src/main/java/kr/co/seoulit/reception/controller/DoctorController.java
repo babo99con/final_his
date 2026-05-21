@@ -18,18 +18,18 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/doctors")
-@Tag(name = "의사 API", description = "의사 API")
+@Tag(name = "?섏궗 API", description = "?섏궗 API")
 public class DoctorController {
 
     private final DoctorService doctorService;
 
-    @Operation(summary = "의사 목록 조회", description = "CMH.STAFF 기준 의사 목록 조회")
+    @Operation(summary = "?섏궗 紐⑸줉 議고쉶", description = "HOSPITAL.CMH_STAFF 湲곗? ?섏궗 紐⑸줉 議고쉶")
     @GetMapping
     public ResponseEntity<ApiResponse<List<DoctorDTO>>> getDoctors(
-            @Parameter(description = "진료과 ID")
+            @Parameter(description = "吏꾨즺怨?ID")
             @RequestParam(required = false) String departmentId
     ) {
         List<DoctorDTO> list = doctorService.getActiveDoctors(departmentId);
-        return ResponseEntity.ok(new ApiResponse<>(true, "의사 목록 조회 완료", list));
+        return ResponseEntity.ok(new ApiResponse<>(true, "?섏궗 紐⑸줉 議고쉶 ?꾨즺", list));
     }
 }

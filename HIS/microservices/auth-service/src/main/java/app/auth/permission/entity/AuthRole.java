@@ -14,7 +14,7 @@ import javax.persistence.Table;
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "AUTH_ROLE", schema = "CMH")
+@Table(name = "AUTH_ROLE", schema = "HOSPITAL")
 public class AuthRole extends AuditableEntity {
 
     @Id

@@ -87,13 +87,12 @@ public class ReceptionClient {
     }
 
     public List<ReceptionResponse> getReceptionQueue(Long departmentId, String doctorId, String date) {
-        String url = UriComponentsBuilder.fromHttpUrl(baseUrl + "api/receptions")
+        String url = UriComponentsBuilder.fromHttpUrl(baseUrl + "api/receptions/queue")
                 .queryParamIfPresent("departmentId", departmentId != null ? java.util.Optional.of(departmentId) : java.util.Optional.empty())
                 .queryParamIfPresent(
                         "doctorId",
                         doctorId != null && !doctorId.isBlank() ? java.util.Optional.of(doctorId.trim()) : java.util.Optional.empty())
-                .queryParamIfPresent("dateFrom", date != null && !date.isBlank() ? java.util.Optional.of(date.trim()) : java.util.Optional.empty())
-                .queryParamIfPresent("dateTo", date != null && !date.isBlank() ? java.util.Optional.of(date.trim()) : java.util.Optional.empty())
+                .queryParamIfPresent("date", date != null && !date.isBlank() ? java.util.Optional.of(date.trim()) : java.util.Optional.empty())
                 .toUriString();
         try {
             ResponseEntity<ApiResponse<List<ReceptionResponse>>> res = restTemplate.exchange(

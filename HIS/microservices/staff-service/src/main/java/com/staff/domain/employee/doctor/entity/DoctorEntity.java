@@ -7,7 +7,7 @@ import lombok.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "EMPLOYEE_DOCTOR", schema = "JCH")
+@Table(name = "EMPLOYEE_DOCTOR", schema = "HOSPITAL")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -55,9 +55,9 @@ public class DoctorEntity {
 
 
 
-    //@PreUpdate 가 뭐냐
-    //기존 엔터티가 수정(update) 되기 직전 실행
-    //JPA가 인설트전에 자동실행
+    //@PreUpdate 媛 萸먮깘
+    //湲곗〈 ?뷀꽣?곌? ?섏젙(update) ?섍린 吏곸쟾 ?ㅽ뻾
+    //JPA媛 ?몄꽕?몄쟾???먮룞?ㅽ뻾
 //    @PrePersist
 //    protected void onCreate() {
 //        Date now = new Date();
@@ -72,9 +72,9 @@ public class DoctorEntity {
 //
 
     /**
-     * 공통 직원 허브 참조.
-     * STAFF_ID를 PK이자 FK로 사용하는 1:1 식별 관계를 JPA 연관관계로 표현한다.
-     * 실제 쓰기 컬럼은 staffId 필드가 담당하므로 연관 필드는 조회/탐색용으로 둔다.
+     * 怨듯넻 吏곸썝 ?덈툕 李몄“.
+     * STAFF_ID瑜?PK?댁옄 FK濡??ъ슜?섎뒗 1:1 ?앸퀎 愿怨꾨? JPA ?곌?愿怨꾨줈 ?쒗쁽?쒕떎.
+     * ?ㅼ젣 ?곌린 而щ읆? staffId ?꾨뱶媛 ?대떦?섎?濡??곌? ?꾨뱶??議고쉶/?먯깋?⑹쑝濡??붾떎.
      */
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "STAFF_ID", referencedColumnName = "STAFF_ID", insertable = false, updatable = false)

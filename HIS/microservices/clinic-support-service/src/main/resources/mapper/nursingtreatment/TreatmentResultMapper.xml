@@ -18,7 +18,7 @@
             tr.patient_id,
             tr.patient_name,
             tr.department_name
-        FROM CHJ.TREATMENT_RESULT tr
+        FROM HOSPITAL.TREATMENT_RESULT tr
         <where>
             <if test="patientName != null and patientName != ''">
                 AND tr.patient_name LIKE '%' || #{patientName} || '%'

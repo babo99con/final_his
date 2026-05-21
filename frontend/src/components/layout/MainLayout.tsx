@@ -88,12 +88,15 @@ export default function MainLayout({
           const response = await fetch("/api/session/menus", {
             cache: "no-store",
             credentials: "same-origin",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           });
 
           if (response.ok) {
             const payload = (await response.json()) as { menus?: MenuNode[] };
             if (mounted && Array.isArray(payload.menus)) {
-              setMenus(payload.menus);
+              setMenus((prev) => (payload.menus!.length > 0 || prev.length === 0 ? payload.menus! : prev));
             }
           }
         } catch {

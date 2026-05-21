@@ -28,7 +28,7 @@ public class AuthUserProfileRepository {
                         e.NAME AS fullName,
                         e.STATUS AS status,
                         e.DEPT_ID AS departmentId
-                    FROM JCH.EMPLOYEE e
+                    FROM HOSPITAL.EMPLOYEE e
                     WHERE e.STAFF_ID = ?
                     """,
                     (rs, rowNum) -> {
@@ -71,8 +71,8 @@ public class AuthUserProfileRepository {
                                 e.NAME AS fullName,
                                 e.STATUS AS status,
                                 e.DEPT_ID AS departmentId
-                            FROM CMH.AUTH_USER a
-                            LEFT JOIN JCH.EMPLOYEE e ON e.STAFF_ID = a.ID
+                            FROM HOSPITAL.AUTH_USER a
+                            LEFT JOIN HOSPITAL.EMPLOYEE e ON e.STAFF_ID = a.ID
                             ORDER BY a.LOGIN_ID ASC
                         )
                         WHERE ROWNUM <= ?
@@ -88,7 +88,7 @@ public class AuthUserProfileRepository {
                         limit
                 );
             } catch (DataAccessException ex) {
-                // JCH 스키마/테이블이 없는 환경에서는 프로필 보강 없이 기본 계정 정보만 반환한다.
+                // JCH ?ㅽ궎留??뚯씠釉붿씠 ?녿뒗 ?섍꼍?먯꽌???꾨줈??蹂닿컯 ?놁씠 湲곕낯 怨꾩젙 ?뺣낫留?諛섑솚?쒕떎.
                 return jdbcTemplate.query(
                         """
                         SELECT * FROM (
@@ -96,7 +96,7 @@ public class AuthUserProfileRepository {
                                 a.ID AS userId,
                                 a.LOGIN_ID AS username,
                                 a.ROLE_CODE AS roleCode
-                            FROM CMH.AUTH_USER a
+                            FROM HOSPITAL.AUTH_USER a
                             ORDER BY a.LOGIN_ID ASC
                         )
                         WHERE ROWNUM <= ?
@@ -126,8 +126,8 @@ public class AuthUserProfileRepository {
                             e.NAME AS fullName,
                             e.STATUS AS status,
                             e.DEPT_ID AS departmentId
-                        FROM CMH.AUTH_USER a
-                        LEFT JOIN JCH.EMPLOYEE e ON e.STAFF_ID = a.ID
+                        FROM HOSPITAL.AUTH_USER a
+                        LEFT JOIN HOSPITAL.EMPLOYEE e ON e.STAFF_ID = a.ID
                         WHERE LOWER(a.ID) LIKE ? ESCAPE '\\'
                            OR LOWER(a.LOGIN_ID) LIKE ? ESCAPE '\\'
                            OR LOWER(NVL(e.NAME, '')) LIKE ? ESCAPE '\\'
@@ -156,7 +156,7 @@ public class AuthUserProfileRepository {
                             a.ID AS userId,
                             a.LOGIN_ID AS username,
                             a.ROLE_CODE AS roleCode
-                        FROM CMH.AUTH_USER a
+                        FROM HOSPITAL.AUTH_USER a
                         WHERE LOWER(a.ID) LIKE ? ESCAPE '\\'
                            OR LOWER(a.LOGIN_ID) LIKE ? ESCAPE '\\'
                         ORDER BY a.LOGIN_ID ASC
@@ -220,9 +220,9 @@ public class AuthUserProfileRepository {
         }
 
         return switch (normalized) {
-            case "DEPT_MED", "INTERNAL_MEDICINE", "ORTHOPEDICS" -> "내과";
-            case "DEPT_NURSING", "NURSING", "NURSING_DEPARTMENT" -> "간호부";
-            case "DEPT_DIAG", "COMMON", "RADIOLOGY", "LAB", "RECEPTION" -> "진료지원";
+            case "DEPT_MED", "INTERNAL_MEDICINE", "ORTHOPEDICS" -> "Internal Medicine";
+            case "DEPT_NURSING", "NURSING", "NURSING_DEPARTMENT" -> "Nursing";
+            case "DEPT_DIAG", "COMMON", "RADIOLOGY", "LAB", "RECEPTION" -> "Diagnostics";
             default -> departmentId;
         };
     }

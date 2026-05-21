@@ -24,12 +24,12 @@
             d.DOCTOR_FILE_URL  AS doctorFileUrl,
 
             n.NURSE_TYPE       AS nurseType
-        FROM JCH.EMPLOYEE e
-                 LEFT JOIN JCH.EMPLOYEE_DOCTOR d
+        FROM HOSPITAL.EMPLOYEE e
+                 LEFT JOIN HOSPITAL.EMPLOYEE_DOCTOR d
                            ON e.STAFF_ID = d.STAFF_ID
-                 LEFT JOIN JCH.EMPLOYEE_NURSE n
+                 LEFT JOIN HOSPITAL.EMPLOYEE_NURSE n
                            ON e.STAFF_ID = n.STAFF_ID
-                 LEFT JOIN JCH.EMPLOYEE_RECEPTION r
+                 LEFT JOIN HOSPITAL.EMPLOYEE_RECEPTION r
                            ON e.STAFF_ID = r.STAFF_ID
         WHERE e.STAFF_ID = #{staffId}
 
@@ -54,18 +54,18 @@
             n.NURSE_TYPE    AS nurseType,
             r.RECEPTION_TYPE AS receptionType
 
-        FROM JCH.EMPLOYEE e
-                 LEFT JOIN JCH.EMPLOYEE_DOCTOR d
+        FROM HOSPITAL.EMPLOYEE e
+                 LEFT JOIN HOSPITAL.EMPLOYEE_DOCTOR d
                            ON e.STAFF_ID = d.STAFF_ID
-                 LEFT JOIN JCH.EMPLOYEE_NURSE n
+                 LEFT JOIN HOSPITAL.EMPLOYEE_NURSE n
                            ON e.STAFF_ID = n.STAFF_ID
-                 LEFT JOIN JCH.EMPLOYEE_RECEPTION r
+                 LEFT JOIN HOSPITAL.EMPLOYEE_RECEPTION r
                            ON e.STAFF_ID = r.STAFF_ID
         ORDER BY e.CREATED_AT DESC, e.STAFF_ID DESC
     </select>
 
 
-    <!--검색 조회-->
+    <!--寃??議고쉶-->
     <select id="searchStaffList"
             parameterType="map"
             resultType="com.staff.domain.employee.basicInfo.dto.StaffResponseDTO">
@@ -90,31 +90,31 @@
         r.RECEPTION_TYPE AS receptionType
 
 
-        FROM JCH.EMPLOYEE e
+        FROM HOSPITAL.EMPLOYEE e
 
-        LEFT JOIN JCH.EMPLOYEE_DOCTOR d
+        LEFT JOIN HOSPITAL.EMPLOYEE_DOCTOR d
         ON  e.STAFF_ID = d.STAFF_ID
 
-        LEFT JOIN JCH.EMPLOYEE_NURSE n
+        LEFT JOIN HOSPITAL.EMPLOYEE_NURSE n
         ON e.STAFF_ID = n.STAFF_ID
 
-        LEFT JOIN JCH.EMPLOYEE_RECEPTION r
+        LEFT JOIN HOSPITAL.EMPLOYEE_RECEPTION r
         ON e.STAFF_ID = r.STAFF_ID
 
         <where>
             <choose>
 
-        <!-- 의사만 -->
+        <!-- ?섏궗留?-->
         <when test="searchType == 'doctorType'">
             d.STAFF_ID IS NOT NULL
         </when>
 
-        <!-- 간호사만 -->
+        <!-- 媛꾪샇?щ쭔 -->
         <when test="searchType == 'nurseType'">
             n.STAFF_ID IS NOT NULL
         </when>
 
-         <!-- 원무 -->
+         <!-- ?먮Т -->
          <when test="searchType == 'receptionType'">
          n.STAFF_ID IS NOT NULL
          </when>
@@ -122,22 +122,22 @@
 
 
 
-        <!-- 이름 -->
+        <!-- ?대쫫 -->
         <when test="searchType == 'name' and search != null and search != ''">
             e.NAME LIKE '%' || #{search} || '%'
         </when>
 
-        <!-- 사원번호 -->
+        <!-- ?ъ썝踰덊샇 -->
         <when test="searchType == 'staffId' and search != null and search != ''">
             e.STAFF_ID LIKE '%' || #{search} || '%'
         </when>
 
-        <!-- 부서 -->
+        <!-- 遺??-->
         <when test="searchType == 'dept' and search != null and search != ''">
             e.DEPT_ID LIKE '%' || #{search} || '%'
         </when>
 
-                <!-- 전체 -->
+                <!-- ?꾩껜 -->
                 <when test="searchType == 'all' and search != null and search != ''">
                     (
                     e.NAME LIKE '%' || #{search} || '%'

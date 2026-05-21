@@ -27,6 +27,7 @@ import PolicyIcon from "@mui/icons-material/Policy";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import type { MenuNode } from "@/types/menu";
 import { normalizeMenuPath } from "@/lib/navigation/menuPath";
+import { getAccessToken } from "@/lib/auth/session";
 
 const iconMap: Record<string, React.ReactNode> = {
   Home: <HomeRoundedIcon fontSize="small" />,
@@ -64,6 +65,130 @@ const STAFF_SHORTCUT_MENUS: Omit<MenuNode, "id">[] = [
     icon: null,
     sortOrder: 3,
     children: [],
+  },
+];
+
+const DEFAULT_SIDEBAR_MENUS: MenuNode[] = [
+  {
+    id: -100,
+    parentId: null,
+    code: "DASHBOARD",
+    name: "대시보드",
+    path: "/",
+    icon: "Home",
+    sortOrder: 1,
+    isActive: "Y",
+    adminOnly: "N",
+    children: [],
+  },
+  {
+    id: -200,
+    parentId: null,
+    code: "PATIENT",
+    name: "환자 관리",
+    path: null,
+    icon: "People",
+    sortOrder: 2,
+    isActive: "Y",
+    adminOnly: "N",
+    children: [
+      { id: -201, parentId: -200, code: "PATIENT_LIST", name: "환자 목록", path: "/patient/list", icon: null, sortOrder: 1, isActive: "Y", adminOnly: "N", children: [] },
+      { id: -202, parentId: -200, code: "PATIENT_CREATE", name: "환자 등록", path: "/patient/create", icon: null, sortOrder: 2, isActive: "Y", adminOnly: "N", children: [] },
+      { id: -203, parentId: -200, code: "PATIENT_INSURANCE", name: "보험 관리", path: "/patient/insurance/list", icon: null, sortOrder: 3, isActive: "Y", adminOnly: "N", children: [] },
+      { id: -204, parentId: -200, code: "PATIENT_CONSENT", name: "동의서 관리", path: "/patient/consent/list", icon: null, sortOrder: 4, isActive: "Y", adminOnly: "N", children: [] },
+    ],
+  },
+  {
+    id: -300,
+    parentId: null,
+    code: "RECEPTION",
+    name: "접수 관리",
+    path: null,
+    icon: "PersonAdd",
+    sortOrder: 3,
+    isActive: "Y",
+    adminOnly: "N",
+    children: [
+      { id: -301, parentId: -300, code: "RECEPTION_DASHBOARD", name: "접수 대시보드", path: "/reception/dashboard", icon: null, sortOrder: 1, isActive: "Y", adminOnly: "N", children: [] },
+      { id: -302, parentId: -300, code: "RECEPTION_OUTPATIENT", name: "외래 접수", path: "/reception/outpatient/list", icon: null, sortOrder: 2, isActive: "Y", adminOnly: "N", children: [] },
+      { id: -303, parentId: -300, code: "RECEPTION_RESERVATION", name: "예약 접수", path: "/reception/reservation/list", icon: null, sortOrder: 3, isActive: "Y", adminOnly: "N", children: [] },
+      { id: -304, parentId: -300, code: "RECEPTION_EMERGENCY", name: "응급 접수", path: "/reception/emergency/list", icon: null, sortOrder: 4, isActive: "Y", adminOnly: "N", children: [] },
+      { id: -305, parentId: -300, code: "RECEPTION_INPATIENT", name: "입원 접수", path: "/reception/inpatient/list", icon: null, sortOrder: 5, isActive: "Y", adminOnly: "N", children: [] },
+    ],
+  },
+  {
+    id: -400,
+    parentId: null,
+    code: "CLINICAL",
+    name: "진료",
+    path: "/clinical",
+    icon: "MedicalServices",
+    sortOrder: 4,
+    isActive: "Y",
+    adminOnly: "N",
+    children: [],
+  },
+  {
+    id: -500,
+    parentId: null,
+    code: "SUPPORT",
+    name: "진료 지원",
+    path: null,
+    icon: "FactCheck",
+    sortOrder: 5,
+    isActive: "Y",
+    adminOnly: "N",
+    children: [
+      { id: -501, parentId: -500, code: "SUPPORT_DASHBOARD", name: "진료 지원 대시보드", path: "/medical_support/dashboard", icon: null, sortOrder: 1, isActive: "Y", adminOnly: "N", children: [] },
+      { id: -502, parentId: -500, code: "SUPPORT_TEST_EXECUTION", name: "검사 실행", path: "/medical_support/testExecution/list", icon: null, sortOrder: 2, isActive: "Y", adminOnly: "N", children: [] },
+    ],
+  },
+  {
+    id: -600,
+    parentId: null,
+    code: "BILLING",
+    name: "청구",
+    path: null,
+    icon: "Description",
+    sortOrder: 6,
+    isActive: "Y",
+    adminOnly: "N",
+    children: [
+      { id: -601, parentId: -600, code: "BILLING_MAIN", name: "청구 메인", path: "/billing", icon: null, sortOrder: 1, isActive: "Y", adminOnly: "N", children: [] },
+      { id: -602, parentId: -600, code: "BILLING_LIST", name: "청구 목록", path: "/billing/list", icon: null, sortOrder: 2, isActive: "Y", adminOnly: "N", children: [] },
+      { id: -603, parentId: -600, code: "BILLING_OUTSTANDING", name: "미수금", path: "/billing/outstanding", icon: null, sortOrder: 3, isActive: "Y", adminOnly: "N", children: [] },
+    ],
+  },
+  {
+    id: -700,
+    parentId: null,
+    code: "STAFF",
+    name: "직원",
+    path: null,
+    icon: "People",
+    sortOrder: 7,
+    isActive: "Y",
+    adminOnly: "N",
+    children: STAFF_SHORTCUT_MENUS.map((shortcut, index) => ({
+      id: -701 - index,
+      ...shortcut,
+    })),
+  },
+  {
+    id: -800,
+    parentId: null,
+    code: "ADMIN",
+    name: "관리",
+    path: null,
+    icon: "Policy",
+    sortOrder: 8,
+    isActive: "Y",
+    adminOnly: "Y",
+    children: [
+      { id: -801, parentId: -800, code: "ADMIN_CODES", name: "코드 관리", path: "/admin/codes", icon: null, sortOrder: 1, isActive: "Y", adminOnly: "Y", children: [] },
+      { id: -802, parentId: -800, code: "ADMIN_PERMISSIONS", name: "권한 관리", path: "/admin/permissions/menu", icon: null, sortOrder: 2, isActive: "Y", adminOnly: "Y", children: [] },
+      { id: -803, parentId: -800, code: "ADMIN_ROLE_MENU", name: "역할별 메뉴 권한", path: "/admin/permissions/role-menu", icon: null, sortOrder: 3, isActive: "Y", adminOnly: "Y", children: [] },
+    ],
   },
 ];
 
@@ -125,12 +250,45 @@ type SidebarProps = {
 export default function Sidebar({ menus: initialMenus, width = 240 }: SidebarProps) {
   const pathname = usePathname();
   const [openMap, setOpenMap] = React.useState<Record<number, boolean>>({});
+  const [fallbackMenus, setFallbackMenus] = React.useState<MenuNode[]>([]);
+  const sourceMenus = initialMenus.length > 0 ? initialMenus : fallbackMenus;
+  const displaySourceMenus = sourceMenus.length > 0 ? sourceMenus : DEFAULT_SIDEBAR_MENUS;
   const menus = React.useMemo(
-    () => ensureStaffShortcuts(stripHiddenMenus(initialMenus)),
-    [initialMenus]
+    () => ensureStaffShortcuts(stripHiddenMenus(displaySourceMenus)),
+    [displaySourceMenus]
   );
   const loading = false;
   const menuLoadError = false;
+
+  React.useEffect(() => {
+    if (initialMenus.length > 0 || fallbackMenus.length > 0) {
+      return;
+    }
+
+    let mounted = true;
+    const token = getAccessToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+
+    fetch("/api/session/menus", {
+      cache: "no-store",
+      credentials: "same-origin",
+      headers,
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload: { menus?: MenuNode[] } | null) => {
+        if (!mounted || !Array.isArray(payload?.menus) || payload.menus.length === 0) {
+          return;
+        }
+        setFallbackMenus(payload.menus);
+      })
+      .catch(() => {
+        // Keep the empty state if the optional recovery fetch fails.
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [fallbackMenus.length, initialMenus.length]);
 
   const itemSx = {
     borderRadius: 2,

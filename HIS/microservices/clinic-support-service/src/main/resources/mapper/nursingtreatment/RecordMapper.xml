@@ -27,10 +27,10 @@
             nr.height_cm,
             nr.weight_kg,
             nr.created_at
-        FROM CHJ.NURSING_RECORD nr
+        FROM HOSPITAL.NURSING_RECORD nr
         LEFT JOIN HOSPITAL.RECEPTION rc
             ON nr.reception_id = rc.reception_id
-        LEFT JOIN CMH.STAFF_DEPARTMENT receipt_dept
+        LEFT JOIN HOSPITAL.STAFF_DEPARTMENT receipt_dept
             ON receipt_dept.department_id = TO_CHAR(rc.department_id)
         LEFT JOIN HOSPITAL.PATIENT p
             ON rc.patient_id = p.patient_id
@@ -88,10 +88,10 @@
             p.name AS patient_name,
             nr.height_cm,
             nr.weight_kg
-        FROM CHJ.NURSING_RECORD nr
+        FROM HOSPITAL.NURSING_RECORD nr
         LEFT JOIN HOSPITAL.RECEPTION rc
             ON nr.reception_id = rc.reception_id
-        LEFT JOIN CMH.STAFF_DEPARTMENT receipt_dept
+        LEFT JOIN HOSPITAL.STAFF_DEPARTMENT receipt_dept
             ON receipt_dept.department_id = TO_CHAR(rc.department_id)
         LEFT JOIN HOSPITAL.PATIENT p
             ON rc.patient_id = p.patient_id
@@ -123,10 +123,10 @@
             rc.patient_id AS patient_id,
             p.name AS patient_name,
             nr.pain_score
-        FROM CHJ.NURSING_RECORD nr
+        FROM HOSPITAL.NURSING_RECORD nr
         LEFT JOIN HOSPITAL.RECEPTION rc
             ON nr.reception_id = rc.reception_id
-        LEFT JOIN CMH.STAFF_DEPARTMENT receipt_dept
+        LEFT JOIN HOSPITAL.STAFF_DEPARTMENT receipt_dept
             ON receipt_dept.department_id = TO_CHAR(rc.department_id)
         LEFT JOIN HOSPITAL.PATIENT p
             ON rc.patient_id = p.patient_id

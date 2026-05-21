@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const DEFAULT_AUTH_API_BASE_URL = "http://localhost:8586";
-const DEFAULT_PATIENTS_API_BASE_URL = "http://localhost:8181";
+const DEFAULT_PATIENTS_API_BASE_URL = "http://localhost:8182";
 const DEFAULT_RECEPTION_API_BASE_URL = "http://localhost:8283";
 const DEFAULT_BILLING_API_BASE_URL = "http://localhost:8081";
 
@@ -18,23 +18,23 @@ const nextConfig: NextConfig = {
   ],
   async rewrites() {
     const patientsApiBase = resolveBaseUrl(
-      process.env.NEXT_PUBLIC_PATIENTS_API_BASE_URL,
+      process.env.PATIENTS_API_INTERNAL_URL ?? process.env.NEXT_PUBLIC_PATIENTS_API_BASE_URL,
       DEFAULT_PATIENTS_API_BASE_URL
     );
     const receptionApiBase = resolveBaseUrl(
-      process.env.NEXT_PUBLIC_RECEPTION_API_BASE_URL,
+      process.env.RECEPTION_API_INTERNAL_URL ?? process.env.NEXT_PUBLIC_RECEPTION_API_BASE_URL,
       DEFAULT_RECEPTION_API_BASE_URL
     );
     const authApiBase = resolveBaseUrl(
-      process.env.NEXT_PUBLIC_AUTH_API_BASE_URL,
+      process.env.AUTH_API_INTERNAL_URL ?? process.env.NEXT_PUBLIC_AUTH_API_BASE_URL,
       DEFAULT_AUTH_API_BASE_URL
     );
     const notificationApiBase = resolveBaseUrl(
-      process.env.NEXT_PUBLIC_NOTIFICATION_API_BASE_URL,
+      process.env.NOTIFICATION_API_INTERNAL_URL ?? process.env.NEXT_PUBLIC_NOTIFICATION_API_BASE_URL,
       authApiBase
     );
     const billingApiBase = resolveBaseUrl(
-      process.env.NEXT_PUBLIC_BILLING_API_BASE_URL,
+      process.env.BILLING_API_INTERNAL_URL ?? process.env.NEXT_PUBLIC_BILLING_API_BASE_URL,
       DEFAULT_BILLING_API_BASE_URL
     );
 
@@ -45,7 +45,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/api/menus/:path*",
-        destination: `${patientsApiBase}/api/menus/:path*`,
+        destination: `${authApiBase}/api/menus/:path*`,
       },
       {
         source: "/api/codes/:path*",

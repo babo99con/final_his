@@ -13,8 +13,8 @@ public interface AuthRoleRepository extends JpaRepository<AuthRole, String> {
         SELECT DISTINCT
             r.ROLE_CODE AS roleCode,
             r.ROLE_NAME AS roleName
-        FROM CMH.AUTH_ROLE r
-        JOIN CMH.AUTH_USER u ON u.ROLE_CODE = r.ROLE_CODE
+        FROM HOSPITAL.AUTH_ROLE r
+        JOIN HOSPITAL.AUTH_USER u ON u.ROLE_CODE = r.ROLE_CODE
         WHERE r.IS_ACTIVE = 'Y'
         ORDER BY r.ROLE_CODE
         """, nativeQuery = true)

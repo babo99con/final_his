@@ -11,9 +11,9 @@ spring:
 
   datasource:
     driver-class-name: oracle.jdbc.OracleDriver
-    url: jdbc:oracle:thin:@//localhost:1521/xepdb1
+    url: ${SPRING_DATASOURCE_URL:jdbc:oracle:thin:@//localhost:1521/XE}
     username: HOSPITAL
-    password: ${PASSWORD:-changeme}
+    password: 1111
 
   jpa:
     hibernate:
@@ -47,7 +47,6 @@ app:
 
 minio:
   endpoint: http://localhost:9000
-  access-key: ${ACCESS_KEY:-changeme}
-  secret-key: ${SECRET_KEY:-changeme}
+  access-key: minioadmin
+  secret-key: minioadmin123
   bucket: hospital-files
-

@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class SupportFeedbackKafkaProperties {
     private boolean enabled;
     private String bootstrapServers = "localhost:9092";
-    private String groupId = "hospital-clinical-support-feedback";
+    private String groupId = "support-clinical";
     // clinic-support-service publishes outcome events to these topics by default.
     private String topicMedication = "medicationRecordOutcome";
     private String topicTreatment = "treatmentResultOutcome";

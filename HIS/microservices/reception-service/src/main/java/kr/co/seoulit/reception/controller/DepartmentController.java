@@ -16,15 +16,15 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/departments")
-@Tag(name = "진료과 API", description = "진료과 API")
+@Tag(name = "吏꾨즺怨?API", description = "吏꾨즺怨?API")
 public class DepartmentController {
 
     private final DepartmentService departmentService;
 
-    @Operation(summary = "진료과 목록 조회", description = "CMH.STAFF_DEPARTMENT 기준 진료과 목록 조회")
+    @Operation(summary = "吏꾨즺怨?紐⑸줉 議고쉶", description = "HOSPITAL.STAFF_DEPARTMENT 湲곗? 吏꾨즺怨?紐⑸줉 議고쉶")
     @GetMapping
     public ResponseEntity<ApiResponse<List<DepartmentDTO>>> getDepartments() {
         List<DepartmentDTO> list = departmentService.getActiveDepartments();
-        return ResponseEntity.ok(new ApiResponse<>(true, "진료과 목록 조회 완료", list));
+        return ResponseEntity.ok(new ApiResponse<>(true, "吏꾨즺怨?紐⑸줉 議고쉶 ?꾨즺", list));
     }
 }

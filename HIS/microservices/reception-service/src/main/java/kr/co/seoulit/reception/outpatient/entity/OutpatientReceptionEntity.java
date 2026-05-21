@@ -12,6 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.ColumnTransformer;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
@@ -93,9 +94,11 @@ public class OutpatientReceptionEntity {
     private String holdReasonText;
 
     @Column(name = "created_by")
+    @ColumnTransformer(read = "TO_NUMBER(REGEXP_SUBSTR(created_by, '[0-9]+$'))")
     private Long createdBy;
 
     @Column(name = "updated_by")
+    @ColumnTransformer(read = "TO_NUMBER(REGEXP_SUBSTR(updated_by, '[0-9]+$'))")
     private Long updatedBy;
 
     @CreationTimestamp

@@ -97,7 +97,6 @@ public class OutpatientReceptionServiceImpl implements OutpatientReceptionServic
     private final DoctorService doctorService;
 
     @Override
-    @Cacheable(value = "RECEPTION_LIST")
     public List<OutpatientReceptionDTO> getReceptionList(Map<String, Object> searchCondition) {
         String searchType = (String) searchCondition.get("searchType");
         String searchValue = (String) searchCondition.get("searchValue");
@@ -119,11 +118,11 @@ public class OutpatientReceptionServiceImpl implements OutpatientReceptionServic
     @Override
     @Cacheable(key = "#receptionId", value = "RECEPTION")
     public OutpatientReceptionDTO getReception(Long receptionId) {
-        OutpatientReceptionEntity entity = receptionRepository.findById(receptionId)
-                .orElseThrow(() -> new ReceptionNotFoundException("Reception not found. receptionId=" + receptionId));
-        enrichDisplayNames(entity);
-        entity.setStatus(normalizeStatus(entity.getStatus()));
-        return normalizeStatusForResponse(receptionResMapStruct.toDto(entity));
+        OutpatientReceptionDTO reception = receptionMyBatisMapper.selectReceptionById(receptionId);
+        if (reception == null) {
+            throw new ReceptionNotFoundException("Reception not found. receptionId=" + receptionId);
+        }
+        return normalizeStatusForResponse(reception);
     }
 
     @Override

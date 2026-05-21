@@ -25,8 +25,8 @@ public interface PermissionAdminRepository extends JpaRepository<AuthMenu, Integ
             NVL(p.CAN_CREATE, 'N') AS canCreate,
             NVL(p.CAN_UPDATE, 'N') AS canUpdate,
             NVL(p.CAN_DELETE, 'N') AS canDelete
-        FROM CMH.MENU m
-        LEFT JOIN CMH.AUTH_ROLE_MENU_PERMISSION p
+        FROM HOSPITAL.CMH_MENU m
+        LEFT JOIN HOSPITAL.AUTH_ROLE_MENU_PERMISSION p
           ON p.ROLE_CODE = :roleCode
          AND p.MENU_ID = m.MENU_ID
         ORDER BY NVL(m.PARENT_ID, 0), m.SORT_ORDER, m.MENU_ID
@@ -55,11 +55,11 @@ public interface PermissionAdminRepository extends JpaRepository<AuthMenu, Integ
             NVL(up.CAN_CREATE, NVL(rp.CAN_CREATE, 'N')) AS finalCanCreate,
             NVL(up.CAN_UPDATE, NVL(rp.CAN_UPDATE, 'N')) AS finalCanUpdate,
             NVL(up.CAN_DELETE, NVL(rp.CAN_DELETE, 'N')) AS finalCanDelete
-        FROM CMH.MENU m
-        LEFT JOIN CMH.AUTH_ROLE_MENU_PERMISSION rp
+        FROM HOSPITAL.CMH_MENU m
+        LEFT JOIN HOSPITAL.AUTH_ROLE_MENU_PERMISSION rp
           ON rp.ROLE_CODE = :roleCode
          AND rp.MENU_ID = m.MENU_ID
-        LEFT JOIN CMH.AUTH_USER_MENU_PERMISSION up
+        LEFT JOIN HOSPITAL.AUTH_USER_MENU_PERMISSION up
           ON up.USER_ID = :userId
          AND up.MENU_ID = m.MENU_ID
         ORDER BY NVL(m.PARENT_ID, 0), m.SORT_ORDER, m.MENU_ID

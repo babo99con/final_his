@@ -11,6 +11,7 @@ target/
 *.jar
 *.war
 *.ear
+!**/gradle/wrapper/gradle-wrapper.jar
 
 # Environment / secrets
 .env
@@ -29,6 +30,8 @@ exports/
 *.7z
 *.tar
 *.gz
+!HOSPITAL_EXPORT/
+!HOSPITAL_EXPORT/*.dmp
 
 # Logs / runtime
 *.log
@@ -36,6 +39,7 @@ logs/
 runtime-logs/
 .codex-runtime-logs/
 .codex-dev*.log
+!HOSPITAL_EXPORT/*.exp.log
 
 # IDE / OS
 .idea/
@@ -45,3 +49,4 @@ Thumbs.db
 
 # Nested git metadata
 .git/
+**/.git/

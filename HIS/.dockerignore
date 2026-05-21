@@ -1,0 +1,11 @@
+**/build
+**/.gradle
+**/.git
+**/runtime-logs
+**/run-logs
+**/.codex-runtime-logs
+**/logs
+**/exports
+*.log
+*.tmp
+*.class

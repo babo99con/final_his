@@ -28,8 +28,8 @@
                r.RMK AS rmk,
                r.RECEPTION_TYPE AS receptionType,
                r.EXT_NO AS extNo
-          FROM JCH.EMPLOYEE_RECEPTION r
-          JOIN JCH.EMPLOYEE e
+          FROM HOSPITAL.EMPLOYEE_RECEPTION r
+          JOIN HOSPITAL.EMPLOYEE e
             ON e.STAFF_ID = r.STAFF_ID
          WHERE r.STAFF_ID = #{staffId}
     </select>
@@ -57,8 +57,8 @@
                r.RMK AS rmk,
                r.RECEPTION_TYPE AS receptionType,
                r.EXT_NO AS extNo
-          FROM JCH.EMPLOYEE_RECEPTION r
-          JOIN JCH.EMPLOYEE e
+          FROM HOSPITAL.EMPLOYEE_RECEPTION r
+          JOIN HOSPITAL.EMPLOYEE e
             ON e.STAFF_ID = r.STAFF_ID
     </select>
 
@@ -87,8 +87,8 @@
                r.RMK AS rmk,
                r.RECEPTION_TYPE AS receptionType,
                r.EXT_NO AS extNo
-          FROM JCH.EMPLOYEE_RECEPTION r
-          JOIN JCH.EMPLOYEE e
+          FROM HOSPITAL.EMPLOYEE_RECEPTION r
+          JOIN HOSPITAL.EMPLOYEE e
             ON e.STAFF_ID = r.STAFF_ID
         <where>
             <if test="search != null and search != ''">

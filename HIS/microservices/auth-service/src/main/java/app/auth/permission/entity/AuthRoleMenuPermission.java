@@ -13,7 +13,7 @@ import javax.persistence.Table;
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "AUTH_ROLE_MENU_PERMISSION", schema = "CMH")
+@Table(name = "AUTH_ROLE_MENU_PERMISSION", schema = "HOSPITAL")
 public class AuthRoleMenuPermission {
 
     @EmbeddedId

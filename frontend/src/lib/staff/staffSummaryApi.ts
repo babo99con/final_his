@@ -70,6 +70,10 @@ type StaffSummaryItemRaw = Partial<{
   email: string | null;
   contact: string | null;
   positionTitle: string | null;
+  status: string | null;
+  doctorType: string | null;
+  nurseType: string | null;
+  receptionType: string | null;
 }>;
 
 type StaffSummaryPageRaw = Partial<{
@@ -156,8 +160,20 @@ const normalizeCount = (value: unknown, fallback = 0): number => {
 };
 
 const normalizeStaffSummaryItem = (raw: StaffSummaryItemRaw): StaffSummaryItem => {
-  const roleCode = toNullableString(raw.roleCode);
-  const positionTitle = toNullableString(raw.positionTitle);
+  const inferredStaffType =
+    raw.doctorType != null
+      ? "doctor"
+      : raw.nurseType != null
+        ? "nurse"
+        : raw.receptionType != null
+          ? "reception"
+          : null;
+  const roleCode = toNullableString(raw.roleCode) ?? inferredStaffType?.toUpperCase() ?? null;
+  const positionTitle =
+    toNullableString(raw.positionTitle) ??
+    toNullableString(raw.doctorType) ??
+    toNullableString(raw.nurseType) ??
+    toNullableString(raw.receptionType);
 
   return {
     staffId: raw.staffId ?? raw.id ?? null,
@@ -168,11 +184,14 @@ const normalizeStaffSummaryItem = (raw: StaffSummaryItemRaw): StaffSummaryItem =
       toNullableString(raw.name) ??
       toNullableString(raw.username),
     roleCode,
-    staffType: toNullableString(raw.staffType),
+    staffType: toNullableString(raw.staffType) ?? inferredStaffType,
     jobTitle: toNullableString(raw.jobTitle) ?? roleCode,
     jobTitleLabel: toNullableString(raw.jobTitleLabel) ?? positionTitle ?? roleCode,
-    statusCode: toNullableString(raw.statusCode),
-    employmentStatus: toNullableString(raw.employmentStatus) ?? toNullableString(raw.statusCode),
+    statusCode: toNullableString(raw.statusCode) ?? toNullableString(raw.status),
+    employmentStatus:
+      toNullableString(raw.employmentStatus) ??
+      toNullableString(raw.statusCode) ??
+      toNullableString(raw.status),
     departmentCode: toNullableString(raw.deptId),
     departmentId: normalizeIdentifier(raw.departmentId ?? raw.deptId),
     departmentName: toNullableString(raw.departmentName) ?? toNullableString(raw.deptName),
@@ -211,6 +230,13 @@ const toParams = (params?: StaffSearchParams) => {
     next.size = params.size;
   }
   return next;
+};
+
+const toStaffSearchType = (condition?: StaffKeywordCondition): string => {
+  if (condition === "staffid") {
+    return "staffId";
+  }
+  return condition ?? "all";
 };
 
 const normalizeStaffSummaryPage = (
@@ -317,14 +343,30 @@ export const fetchStaffSummaryApi = async (
 ): Promise<StaffSummaryPage> => {
   const requestedPage = params?.page ?? 0;
   const requestedSize = params?.size ?? 50;
-  const res = await api.post<ApiResponse<StaffSummaryPageRaw | StaffSummaryItemRaw[]>>(
-    "/api/staff",
-    toParams({
-      ...params,
-      page: requestedPage,
-      size: requestedSize,
-    })
-  );
+  const keyword = (params?.keyword ?? "").trim();
+  const roleSearchType =
+    params?.role === "doctor"
+      ? "doctorType"
+      : params?.role === "nurse"
+        ? "nurseType"
+        : params?.role === "reception"
+          ? "receptionType"
+          : null;
+  const path = keyword || roleSearchType ? "/api/staff/search" : "/api/staff/list";
+  const requestParams =
+    path === "/api/staff/search"
+      ? {
+          search: keyword,
+          searchType: roleSearchType ?? toStaffSearchType(params?.keywordCondition),
+        }
+      : toParams({
+          ...params,
+          page: requestedPage,
+          size: requestedSize,
+        });
+  const res = await api.get<ApiResponse<StaffSummaryPageRaw | StaffSummaryItemRaw[]>>(path, {
+    params: requestParams,
+  });
   if (!res.data.success) {
     throw new Error(normalizeMessage(res.data.message, "Failed to load staff list"));
   }
@@ -336,35 +378,16 @@ export const fetchStaffSummaryApi = async (
 };
 
 export const fetchStaffDepartmentSummaryApi = async (): Promise<StaffDepartmentSummaryItem[]> => {
-  const res = await api.get<
-    ApiResponse<
-      | StaffDepartmentSummaryItemRaw[]
-      | {
-          list?: StaffDepartmentSummaryItemRaw[] | null;
-          content?: StaffDepartmentSummaryItemRaw[] | null;
-          items?: StaffDepartmentSummaryItemRaw[] | null;
-        }
-    >
-  >("/api/staff/departments");
-  if (!res.data.success) {
-    throw new Error(normalizeMessage(res.data.message, "Failed to load departments"));
-  }
-  return normalizeDepartmentSummaryList(res.data.result ?? res.data.data);
+  const staffPage = await fetchStaffSummaryApi({ size: 500 });
+  return normalizeDepartmentSummaryList(
+    staffPage.list.map((item) => ({
+      departmentId: item.departmentId,
+      departmentName: item.departmentName ?? item.departmentId,
+      activeFlag: "Y",
+    }))
+  );
 };
 
 export const fetchStaffLocationSummaryApi = async (): Promise<StaffLocationSummaryItem[]> => {
-  const res = await api.get<
-    ApiResponse<
-      | StaffLocationSummaryItem[]
-      | {
-          list?: StaffLocationSummaryItem[] | null;
-          content?: StaffLocationSummaryItem[] | null;
-          items?: StaffLocationSummaryItem[] | null;
-        }
-    >
-  >("/api/staff/locations");
-  if (!res.data.success) {
-    throw new Error(normalizeMessage(res.data.message, "Failed to load locations"));
-  }
-  return unwrapListPayload(res.data.result ?? res.data.data);
+  return [];
 };
