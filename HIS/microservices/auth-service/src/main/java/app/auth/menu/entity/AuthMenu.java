@@ -8,7 +8,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "MENU", schema = "CMH")
+@Table(name = "CMH_MENU", schema = "HOSPITAL")
 public class AuthMenu extends AuditableEntity {
 
     @Id

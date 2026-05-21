@@ -4,7 +4,7 @@ import type { PatientRestriction } from "@/lib/patient/restrictionApi";
 import type { PatientFlag } from "@/lib/patient/flagApi";
 
 export const API_BASE =
-  process.env.NEXT_PUBLIC_PATIENTS_API_BASE_URL ?? "http://localhost:8181";
+  process.env.NEXT_PUBLIC_PATIENTS_API_BASE_URL ?? "http://localhost:8182";
 
 export function resolveFileUrl(url?: string | null): string {
   if (!url) return "";

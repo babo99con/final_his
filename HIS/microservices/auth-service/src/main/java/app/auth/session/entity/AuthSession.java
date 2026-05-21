@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "AUTH_SESSION", schema = "CMH")
+@Table(name = "AUTH_SESSION", schema = "HOSPITAL")
 public class AuthSession extends AuditableEntity {
 
     @Id

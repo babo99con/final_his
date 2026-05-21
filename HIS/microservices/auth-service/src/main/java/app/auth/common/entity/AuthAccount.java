@@ -14,7 +14,7 @@ import javax.persistence.Transient;
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "AUTH_USER", schema = "CMH")
+@Table(name = "AUTH_USER", schema = "HOSPITAL")
 public class AuthAccount {
 
     @Id
@@ -34,7 +34,7 @@ public class AuthAccount {
     @Column(name = "PASSWORD_HASH", nullable = false, length = 100)
     private String passwordHash;
 
-    // DB has ACCOUNT_STATUS; profile/status is still enriched from JCH.EMPLOYEE.
+    // DB has ACCOUNT_STATUS; profile/status is still enriched from HOSPITAL.EMPLOYEE.
     @Column(name = "ACCOUNT_STATUS")
     private String status;
 

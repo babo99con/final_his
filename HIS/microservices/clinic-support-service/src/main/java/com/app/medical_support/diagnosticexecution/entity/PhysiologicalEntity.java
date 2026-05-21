@@ -11,7 +11,7 @@ import javax.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(schema = "CHJ", name = "PHYSIOLOGICAL_EXAM")
+@Table(schema = "HOSPITAL", name = "PHYSIOLOGICAL_EXAM")
 @Getter
 @Setter
 @NoArgsConstructor

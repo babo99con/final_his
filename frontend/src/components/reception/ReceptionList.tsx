@@ -10,9 +10,7 @@ import {
   CardContent,
   Chip,
   Dialog,
-  DialogActions,
   DialogContent,
-  DialogTitle,
   Divider,
   IconButton,
   InputAdornment,
@@ -55,18 +53,6 @@ const visitTypeLabel = (value?: string | null) => {
 const ITEMS_PER_PAGE = 10;
 const PATIENT_LIST_ITEMS_PER_PAGE = 8;
 const RECEPTION_LIST_REFRESH_INTERVAL_MS = 10000;
-const RECEPTION_API_BASE =
-  process.env.NEXT_PUBLIC_RECEPTION_API_BASE_URL ?? "http://localhost:8283";
-const RECEPTION_STATUS_EVENT_NAME = "reception-status-changed";
-const NOTIFY_TARGET_STATUS = "IN_PROGRESS";
-const MAX_PROCESSED_EVENT_KEYS = 200;
-
-type ReceptionStatusChangedEvent = {
-  receptionId?: number;
-  patientName?: string | null;
-  toStatus?: string | null;
-  changedAt?: string | null;
-};
 
 type StatusFilterKey =
   | "ALL"
@@ -386,14 +372,6 @@ export default function ReceptionList({
   const [todayKey, setTodayKey] = React.useState(() => toLocalDateKey(new Date()));
   const [statusFilter, setStatusFilter] = React.useState<StatusFilterKey>("ALL");
   const [page, setPage] = React.useState(1);
-  const [notificationQueue, setNotificationQueue] = React.useState<string[]>([]);
-  const processedEventKeysRef = React.useRef<string[]>([]);
-
-  const activeNotification = notificationQueue[0] ?? null;
-
-  const closeNotification = React.useCallback(() => {
-    setNotificationQueue((prev) => prev.slice(1));
-  }, []);
   const isCanceledView = initialSearchType === "status" && initialKeyword === "CANCELED";
   const todayList = React.useMemo(() => {
     const baseList = (isCanceledView
@@ -519,48 +497,6 @@ export default function ReceptionList({
     } finally {
       setMasterDataLoading(false);
     }
-  }, []);
-
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const streamUrl = `${RECEPTION_API_BASE}/api/receptions/events/stream`;
-    const eventSource = new EventSource(streamUrl);
-
-    const onStatusChanged = (rawEvent: Event) => {
-      const event = rawEvent as MessageEvent<string>;
-      try {
-        const payload = JSON.parse(event.data) as ReceptionStatusChangedEvent;
-        const nextStatus = (payload.toStatus ?? "").trim().toUpperCase();
-        if (nextStatus !== NOTIFY_TARGET_STATUS) return;
-
-        const eventKey = `${payload.receptionId ?? "unknown"}:${nextStatus}:${payload.changedAt ?? "unknown"}`;
-        if (processedEventKeysRef.current.includes(eventKey)) return;
-
-        processedEventKeysRef.current.push(eventKey);
-        if (processedEventKeysRef.current.length > MAX_PROCESSED_EVENT_KEYS) {
-          processedEventKeysRef.current.splice(
-            0,
-            processedEventKeysRef.current.length - MAX_PROCESSED_EVENT_KEYS
-          );
-        }
-
-        const patientName = payload.patientName?.trim() || "환자";
-        setNotificationQueue((prev) => [...prev, `${patientName}님이 진료중입니다`]);
-      } catch {
-        // ignore malformed event payload
-      }
-    };
-
-    eventSource.addEventListener(RECEPTION_STATUS_EVENT_NAME, onStatusChanged as EventListener);
-
-    return () => {
-      eventSource.removeEventListener(
-        RECEPTION_STATUS_EVENT_NAME,
-        onStatusChanged as EventListener
-      );
-      eventSource.close();
-    };
   }, []);
 
   React.useEffect(() => {
@@ -1378,18 +1314,6 @@ export default function ReceptionList({
         </Box>
 
       </Box>
-
-      <Dialog open={Boolean(activeNotification)} onClose={closeNotification} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700 }}>진료 알림</DialogTitle>
-        <DialogContent>
-          <Typography>{activeNotification}</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={closeNotification} variant="contained">
-            확인
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       <Dialog
         open={patientListModalOpen}

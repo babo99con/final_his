@@ -6,7 +6,7 @@ import lombok.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "EMPLOYEE", schema = "JCH")
+@Table(name = "EMPLOYEE", schema = "HOSPITAL")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -60,8 +60,8 @@ public class StaffEntity {
 
 
     //@PreUpdate
-    //기존 엔터티가 수정(update) 되기 직전 실행
-    //JPA가 인설트전에 자동실행
+    //湲곗〈 ?뷀꽣?곌? ?섏젙(update) ?섍린 吏곸쟾 ?ㅽ뻾
+    //JPA媛 ?몄꽕?몄쟾???먮룞?ㅽ뻾
     @PrePersist
     protected void onCreate() {
         Date now = new Date();
@@ -80,22 +80,22 @@ public class StaffEntity {
 
 
     /**
-     * 의사 상세 1:1 연관관계.
-     * 공통 직원 생성 후 의사 상세가 연결되는 구조를 반영한다.
+     * ?섏궗 ?곸꽭 1:1 ?곌?愿怨?
+     * 怨듯넻 吏곸썝 ?앹꽦 ???섏궗 ?곸꽭媛 ?곌껐?섎뒗 援ъ“瑜?諛섏쁺?쒕떎.
      */
     @OneToOne(mappedBy = "employee", fetch = FetchType.LAZY)
     private com.staff.domain.employee.doctor.entity.DoctorEntity doctor;
 
     /**
-     * 간호사 상세 1:1 연관관계.
-     * 공통 직원 생성 후 간호사 상세가 연결되는 구조를 반영한다.
+     * 媛꾪샇???곸꽭 1:1 ?곌?愿怨?
+     * 怨듯넻 吏곸썝 ?앹꽦 ??媛꾪샇???곸꽭媛 ?곌껐?섎뒗 援ъ“瑜?諛섏쁺?쒕떎.
      */
     @OneToOne(mappedBy = "employee", fetch = FetchType.LAZY)
     private com.staff.domain.employee.nurse.entity.NurseEntity nurse;
 
     /**
-     * 원무 상세 1:1 연관관계.
-     * 공통 직원 생성 후 간호사 상세가 연결되는 구조를 반영한다.
+     * ?먮Т ?곸꽭 1:1 ?곌?愿怨?
+     * 怨듯넻 吏곸썝 ?앹꽦 ??媛꾪샇???곸꽭媛 ?곌껐?섎뒗 援ъ“瑜?諛섏쁺?쒕떎.
      */
     @OneToOne(mappedBy = "employee", fetch = FetchType.LAZY)
     private com.staff.domain.employee.reception.entity.ReceptionEntity reception;

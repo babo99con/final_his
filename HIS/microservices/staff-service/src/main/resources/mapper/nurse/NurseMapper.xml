@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.staff.domain.employee.nurse.mapper.NurseMapper">
 
-    <!--조회-->
+    <!--議고쉶-->
     <select id="selectNurseById" parameterType="string" resultType="com.staff.domain.employee.nurse.dto.NurseResponseDTO">
         SELECT n.STAFF_ID AS staffId,
                e.DEPT_ID AS deptId,
@@ -24,10 +24,10 @@
                n.EDUCATION AS education,
                n.CAREER_DETAIL AS careerDetail,
                n.EXT_NO AS extNo
-        FROM JCH.EMPLOYEE_NURSE n JOIN JCH.EMPLOYEE e ON e.STAFF_ID = n.STAFF_ID WHERE n.STAFF_ID = #{staffId}
+        FROM HOSPITAL.EMPLOYEE_NURSE n JOIN HOSPITAL.EMPLOYEE e ON e.STAFF_ID = n.STAFF_ID WHERE n.STAFF_ID = #{staffId}
     </select>
 
-    <!--단건 조회-->
+    <!--?④굔 議고쉶-->
     <select id="selectNurseList" resultType="com.staff.domain.employee.nurse.dto.NurseResponseDTO">
         SELECT n.STAFF_ID AS staffId,
         e.DEPT_ID AS deptId,
@@ -50,13 +50,13 @@
         n.CAREER_DETAIL AS careerDetail,
         n.EXT_NO AS extNo
 
-        FROM JCH.EMPLOYEE_NURSE n
-                 JOIN JCH.EMPLOYEE e
+        FROM HOSPITAL.EMPLOYEE_NURSE n
+                 JOIN HOSPITAL.EMPLOYEE e
                       ON e.STAFF_ID = n.STAFF_ID
 
     </select>
 
-    <!--검색 조회-->
+    <!--寃??議고쉶-->
     <select id="searchNurseList"
             parameterType="map"
             resultType="com.staff.domain.employee.nurse.dto.NurseResponseDTO">
@@ -81,39 +81,39 @@
         n.EDUCATION AS education,
         n.CAREER_DETAIL AS careerDetail,
         n.EXT_NO AS extNo
-        FROM JCH.EMPLOYEE_NURSE n
-        JOIN JCH.EMPLOYEE e
+        FROM HOSPITAL.EMPLOYEE_NURSE n
+        JOIN HOSPITAL.EMPLOYEE e
         ON e.STAFF_ID = n.STAFF_ID
 
         <where>
             <if test="search != null and search != ''">
                 <choose>
-                    <!-- 이름 -->
+                    <!-- ?대쫫 -->
                     <when test="searchType == 'name'">
                         e.NAME LIKE '%' || #{search} || '%'
                     </when>
 
-                    <!-- 사원번호 -->
+                    <!-- ?ъ썝踰덊샇 -->
                     <when test="searchType == 'staffId'">
                         n.STAFF_ID LIKE '%' || #{search} || '%'
                     </when>
 
-                    <!-- 부서 -->
+                    <!-- 遺??-->
                     <when test="searchType == 'dept'">
                         e.DEPT_ID LIKE '%' || #{search} || '%'
                     </when>
 
-                    <!-- 근무타입 -->
+                    <!-- 洹쇰Т???-->
                     <when test="searchType == 'shiftType'">
                         n.SHIFT_TYPE LIKE '%' || #{search} || '%'
                     </when>
 
-                    <!-- 사내번호 -->
+                    <!-- ?щ궡踰덊샇 -->
                     <when test="searchType == 'extNo'">
                         n.EXT_NO LIKE '%' || #{search} || '%'
                     </when>
 
-                    <!-- 전체 -->
+                    <!-- ?꾩껜 -->
                     <otherwise>
                         (
                         e.NAME LIKE '%' || #{search} || '%'

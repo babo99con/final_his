@@ -9,11 +9,11 @@
         SELECT
         d.department_id AS department_id,
         d.department_name AS department_name
-        FROM CMH.STAFF_DEPARTMENT d
+        FROM HOSPITAL.STAFF_DEPARTMENT d
         WHERE NVL(d.reception_display_yn, 'N') = 'Y'
         AND EXISTS (
         SELECT 1
-        FROM CMH.STAFF s
+        FROM HOSPITAL.CMH_STAFF s
         WHERE s.staff_department_id = d.department_id
         AND s.staff_id LIKE 'DOC-%'
         AND UPPER(TRIM(NVL(s.employment_status, 'ACTIVE'))) = 'ACTIVE'
@@ -23,7 +23,7 @@
 
     <select id="selectDepartmentNameById" resultType="string">
         SELECT d.department_name
-        FROM CMH.STAFF_DEPARTMENT d
+        FROM HOSPITAL.STAFF_DEPARTMENT d
         WHERE d.department_id = #{departmentId}
     </select>
 

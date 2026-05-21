@@ -19,7 +19,6 @@ import {
   getSessionUser,
   type SessionUser,
 } from "@/lib/auth/session";
-import NotificationBell from "@/components/layout/NotificationBell";
 
 export default function Navbar() {
   const [sessionUser, setSessionUser] = React.useState<SessionUser | null>(null);
@@ -103,8 +102,6 @@ export default function Navbar() {
         <Box sx={{ flexGrow: 1 }} />
 
         <Stack direction="row" spacing={2} alignItems="center">
-          <NotificationBell />
-
           <Stack direction="row" spacing={1} alignItems="center">
             <PersonOutlineOutlinedIcon sx={{ color: "#dbe8ff" }} />
             <Typography sx={{ color: "#e8f1ff", fontSize: 14, fontWeight: 600 }}>

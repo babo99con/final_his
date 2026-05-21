@@ -52,12 +52,12 @@ hira:
 drug:
   api:
     base-url: http://apis.data.go.kr
-    service-key: "${DRUG_API_KEY}"
+    service-key: "${DRUG_API_KEY:}"
 
 disease:
   api:
     base-url: http://apis.data.go.kr
-    service-key: "${DISEASE_API_KEY}"
+    service-key: "${DISEASE_API_KEY:}"
 
 mybatis:
   configuration:
@@ -76,13 +76,13 @@ app:
     kafka:
       enabled: ${APP_TEST_RESULT_READY_KAFKA_ENABLED:false}
       topic: ${APP_TEST_RESULT_READY_KAFKA_TOPIC:test-result-ready}
-      group-id: ${APP_TEST_RESULT_READY_KAFKA_GROUP_ID:hospital-clinical-test-result-ready}
+      group-id: ${APP_TEST_RESULT_READY_KAFKA_GROUP_ID:support-clinical}
       bootstrap-servers: ${APP_TEST_RESULT_READY_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
   support-feedback:
     kafka:
       enabled: ${APP_SUPPORT_FEEDBACK_KAFKA_ENABLED:true}
       bootstrap-servers: ${APP_SUPPORT_FEEDBACK_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-      group-id: ${APP_SUPPORT_FEEDBACK_KAFKA_GROUP_ID:hospital-clinical-support-feedback}
+      group-id: ${APP_SUPPORT_FEEDBACK_KAFKA_GROUP_ID:support-clinical}
       topic-medication: ${APP_SUPPORT_FEEDBACK_TOPIC_MEDICATION:medicationRecordOutcome}
       topic-treatment: ${APP_SUPPORT_FEEDBACK_TOPIC_TREATMENT:treatmentResultOutcome}
       topic-test-execution: ${APP_SUPPORT_FEEDBACK_TOPIC_TEST_EXECUTION:testExecution}
@@ -90,9 +90,9 @@ app:
 ---
 spring:
   datasource:
-    url: jdbc:oracle:thin:@//localhost:1521/xepdb1
-    username: ssh
-    password: ${PASSWORD:-changeme}
+    url: ${SPRING_DATASOURCE_URL:jdbc:oracle:thin:@//localhost:1521/XE}
+    username: HOSPITAL
+    password: 1111
     driver-class-name: oracle.jdbc.OracleDriver
     hikari:
       maximum-pool-size: ${LOCAL_DB_POOL_MAX:3}
@@ -134,7 +134,7 @@ spring:
     database-platform: org.hibernate.dialect.OracleDialect
     properties:
       hibernate:
-        default_schema: SSH
+        default_schema: HOSPITAL
         boot:
           allow_jdbc_metadata_access: false
 
@@ -187,7 +187,7 @@ spring:
     database-platform: org.hibernate.dialect.OracleDialect
     properties:
       hibernate:
-        default_schema: SSH
+        default_schema: HOSPITAL
         boot:
           allow_jdbc_metadata_access: false
 

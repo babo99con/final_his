@@ -159,16 +159,14 @@ export default function BillingListPage() {
   ] as const;
 
   useEffect(() => {
-    if (status || billingDate) {
-      dispatch(
-        fetchBillsRequest({
-          status,
-          confirmedOnly,
-          partialOnly,
-          billingDate,
-        })
-      );
-    }
+    dispatch(
+      fetchBillsRequest({
+        status,
+        confirmedOnly,
+        partialOnly,
+        billingDate,
+      })
+    );
   }, [dispatch, status, confirmedOnly, partialOnly, billingDate]);
 
   useEffect(() => {

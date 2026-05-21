@@ -1,4 +1,4 @@
-﻿import axios from "axios";
+import axios from "axios";
 import type {
   ApiResponse,
   DepartmentOption,
@@ -7,7 +7,7 @@ import type {
 } from "@/features/Reservations/ReservationTypes";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_PATIENTS_API_BASE_URL ?? "http://localhost:8181",
+  baseURL: process.env.NEXT_PUBLIC_PATIENTS_API_BASE_URL ?? "http://localhost:8182",
 });
 
 const receptionApi = axios.create({

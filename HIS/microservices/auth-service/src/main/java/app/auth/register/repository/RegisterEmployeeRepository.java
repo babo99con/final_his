@@ -44,8 +44,8 @@ public class RegisterEmployeeRepository {
                     e.DEPT_ID AS departmentId,
                     e.PHONE AS phone,
                     e.EMAIL AS email
-                FROM CMH.AUTH_USER a
-                JOIN JCH.EMPLOYEE e ON e.STAFF_ID = a.ID
+                FROM HOSPITAL.AUTH_USER a
+                JOIN HOSPITAL.EMPLOYEE e ON e.STAFF_ID = a.ID
                 WHERE e.STATUS = 'PENDING_APPROVAL'
                 ORDER BY e.CREATED_AT ASC
                 """,
@@ -73,7 +73,7 @@ public class RegisterEmployeeRepository {
         List<String> results = jdbcTemplate.query(
                 """
                 SELECT e.STATUS
-                FROM JCH.EMPLOYEE e
+                FROM HOSPITAL.EMPLOYEE e
                 WHERE e.STAFF_ID = ?
                 """,
                 (rs, rowNum) -> rs.getString("STATUS"),
@@ -109,7 +109,7 @@ public class RegisterEmployeeRepository {
     ) {
         jdbcTemplate.update(
                 """
-                INSERT INTO JCH.EMPLOYEE (
+                INSERT INTO HOSPITAL.EMPLOYEE (
                     STAFF_ID,
                     DEPT_ID,
                     NAME,
@@ -131,7 +131,7 @@ public class RegisterEmployeeRepository {
 
     public void updateEmployeeStatus(String staffId, String status) {
         jdbcTemplate.update(
-                "UPDATE JCH.EMPLOYEE SET STATUS = ?, UPDATED_AT = SYSDATE WHERE STAFF_ID = ?",
+                "UPDATE HOSPITAL.EMPLOYEE SET STATUS = ?, UPDATED_AT = SYSDATE WHERE STAFF_ID = ?",
                 status,
                 staffId
         );
@@ -142,15 +142,15 @@ public class RegisterEmployeeRepository {
                 """
                 SELECT NVL(MAX(TO_NUMBER(REGEXP_SUBSTR(STAFF_ID, '[0-9]{4}$'))), 0)
                 FROM (
-                    SELECT STAFF_ID FROM JCH.EMPLOYEE
+                    SELECT STAFF_ID FROM HOSPITAL.EMPLOYEE
                     UNION ALL
-                    SELECT STAFF_ID FROM JCH.EMPLOYEE_DOCTOR
+                    SELECT STAFF_ID FROM HOSPITAL.EMPLOYEE_DOCTOR
                     UNION ALL
-                    SELECT STAFF_ID FROM JCH.EMPLOYEE_NURSE
+                    SELECT STAFF_ID FROM HOSPITAL.EMPLOYEE_NURSE
                     UNION ALL
-                    SELECT STAFF_ID FROM JCH.EMPLOYEE_RECEPTION
+                    SELECT STAFF_ID FROM HOSPITAL.EMPLOYEE_RECEPTION
                     UNION ALL
-                    SELECT STAFF_ID FROM JCH.EMPLOYEE_PRIVATE
+                    SELECT STAFF_ID FROM HOSPITAL.EMPLOYEE_PRIVATE
                 )
                 WHERE REGEXP_LIKE(STAFF_ID, ?)
                 """,
@@ -205,9 +205,9 @@ public class RegisterEmployeeRepository {
         }
 
         return switch (normalized) {
-            case "DEPT_MED", "INTERNAL_MEDICINE", "ORTHOPEDICS" -> "내과";
-            case "DEPT_NURSING", "NURSING", "NURSING_DEPARTMENT" -> "간호부";
-            case "DEPT_DIAG", "COMMON", "RADIOLOGY", "LAB", "RECEPTION" -> "진료지원";
+            case "DEPT_MED", "INTERNAL_MEDICINE", "ORTHOPEDICS" -> "Internal Medicine";
+            case "DEPT_NURSING", "NURSING", "NURSING_DEPARTMENT" -> "Nursing";
+            case "DEPT_DIAG", "COMMON", "RADIOLOGY", "LAB", "RECEPTION" -> "Diagnostics";
             default -> departmentId;
         };
     }

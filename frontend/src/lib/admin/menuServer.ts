@@ -870,9 +870,10 @@ const measureMenuTree = (menus: MenuNode[]) => {
   return { totalNodes, maxDepth };
 };
 
-export const fetchServerMenus = async (): Promise<MenuNode[]> => {
+export const fetchServerMenus = async (accessTokenOverride?: string): Promise<MenuNode[]> => {
   const cookieStore = await cookies();
-  const accessToken = cookieStore.get("his_access_token")?.value?.trim() ?? "";
+  const accessToken =
+    accessTokenOverride?.trim() || cookieStore.get("his_access_token")?.value?.trim() || "";
   if (!accessToken) {
     return [];
   }

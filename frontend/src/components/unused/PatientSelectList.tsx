@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
@@ -23,7 +23,7 @@ type Props = {
 };
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_PATIENTS_API_BASE_URL ?? "http://localhost:8181";
+  process.env.NEXT_PUBLIC_PATIENTS_API_BASE_URL ?? "http://localhost:8182";
 
 function resolvePhotoUrl(url?: string | null) {
   if (!url) return "";

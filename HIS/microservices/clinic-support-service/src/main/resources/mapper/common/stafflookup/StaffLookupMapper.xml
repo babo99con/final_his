@@ -12,7 +12,7 @@
                 s.staff_id AS staffId,
                 s.full_name AS fullName,
                 s.duty_code AS dutyCode
-            FROM CMH.STAFF s
+            FROM HOSPITAL.CMH_STAFF s
             WHERE 1 = 1
             <if test="staffIdPrefix != null and staffIdPrefix != ''">
                 AND s.staff_id LIKE #{staffIdPrefix} || '%'

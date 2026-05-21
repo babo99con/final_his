@@ -1,0 +1,132 @@
+;;; 
+Export: Release 21.0.0.0.0 - Production on Thu May 21 12:27:22 2026
+Version 21.3.0.0.0
+
+Copyright (c) 1982, 2021, Oracle and/or its affiliates.  All rights reserved.
+;;; 
+Connected to: Oracle Database 21c Express Edition Release 21.0.0.0.0 - Production
+Starting "SYSTEM"."SYS_EXPORT_SCHEMA_01":  system/********@//localhost:1521/XE schemas=HOSPITAL directory=XE_IMPORT_DIR dumpfile=hospital_xe_20260521_212722.dmp logfile=hospital_xe_20260521_212722.exp.log reuse_dumpfiles=yes exclude=grant 
+Processing object type SCHEMA_EXPORT/TABLE/TABLE_DATA
+Processing object type SCHEMA_EXPORT/TABLE/INDEX/STATISTICS/INDEX_STATISTICS
+Processing object type SCHEMA_EXPORT/TABLE/STATISTICS/TABLE_STATISTICS
+Processing object type SCHEMA_EXPORT/STATISTICS/MARKER
+Processing object type SCHEMA_EXPORT/SYSTEM_GRANT
+Processing object type SCHEMA_EXPORT/ROLE_GRANT
+Processing object type SCHEMA_EXPORT/DEFAULT_ROLE
+Processing object type SCHEMA_EXPORT/TABLESPACE_QUOTA
+Processing object type SCHEMA_EXPORT/PRE_SCHEMA/PROCACT_SCHEMA
+Processing object type SCHEMA_EXPORT/SEQUENCE/SEQUENCE
+Processing object type SCHEMA_EXPORT/TABLE/TABLE
+Processing object type SCHEMA_EXPORT/TABLE/COMMENT
+Processing object type SCHEMA_EXPORT/PROCEDURE/PROCEDURE
+Processing object type SCHEMA_EXPORT/PROCEDURE/ALTER_PROCEDURE
+Processing object type SCHEMA_EXPORT/TABLE/INDEX/INDEX
+Processing object type SCHEMA_EXPORT/TABLE/CONSTRAINT/CONSTRAINT
+Processing object type SCHEMA_EXPORT/TABLE/CONSTRAINT/REF_CONSTRAINT
+. . exported "HOSPITAL"."AUTH_ROLE_MENU_PERMISSION"      16.74 KB     330 rows
+. . exported "HOSPITAL"."AUTH_SESSION"                   11.15 KB       9 rows
+. . exported "HOSPITAL"."CMH_STAFF"                      12.85 KB       5 rows
+. . exported "HOSPITAL"."CMH_MENU"                       11.69 KB      33 rows
+. . exported "HOSPITAL"."EMPLOYEE"                       11.12 KB       5 rows
+. . exported "HOSPITAL"."EMPLOYEE_NURSE"                 9.414 KB       1 rows
+. . exported "HOSPITAL"."EMPLOYEE_DOCTOR"                9.429 KB       1 rows
+. . exported "HOSPITAL"."NOTE"                               9 KB       1 rows
+. . exported "HOSPITAL"."EMPLOYEE_RECEPTION"             9.007 KB       1 rows
+. . exported "HOSPITAL"."CLINICAL_VISIT"                 8.656 KB       2 rows
+. . exported "HOSPITAL"."CLINICAL_ORDER"                 8.632 KB       1 rows
+. . exported "HOSPITAL"."CLINICAL_ORDER_ITEM"            8.539 KB       1 rows
+. . exported "HOSPITAL"."AUTH_USER"                      8.429 KB       5 rows
+. . exported "HOSPITAL"."DEPARTMENT"                     8.289 KB       4 rows
+. . exported "HOSPITAL"."CLINICAL_DIAGNOSIS"             7.273 KB       1 rows
+. . exported "HOSPITAL"."CLINICAL_ORDER_RESULT"          7.289 KB       1 rows
+. . exported "HOSPITAL"."AUTH_ROLE"                       7.25 KB      10 rows
+. . exported "HOSPITAL"."RECEPTION_CLOSURE_REASON"       6.968 KB       4 rows
+. . exported "HOSPITAL"."CLINICAL_VISIT_QUEUE"           6.804 KB       1 rows
+. . exported "HOSPITAL"."CLINICAL_VISIT_STATUS_HISTORY"  6.390 KB       1 rows
+. . exported "HOSPITAL"."STAFF_DEPARTMENT"               6.304 KB      17 rows
+. . exported "HOSPITAL"."PAYMENT_METHOD_MASTER"          6.031 KB       5 rows
+. . exported "HOSPITAL"."NO_SEQUENCE"                    5.960 KB       2 rows
+. . exported "HOSPITAL"."DOCTOR"                         5.937 KB       1 rows
+. . exported "HOSPITAL"."AUDIT_LOG"                          0 KB       0 rows
+. . exported "HOSPITAL"."AUTH_USER_MENU_PERMISSION"          0 KB       0 rows
+. . exported "HOSPITAL"."BILL"                           9.671 KB       1 rows
+. . exported "HOSPITAL"."BILLING"                            0 KB       0 rows
+. . exported "HOSPITAL"."BILLING_DEPOSIT"                    0 KB       0 rows
+. . exported "HOSPITAL"."BILLING_REQUEST"                    0 KB       0 rows
+. . exported "HOSPITAL"."BILL_HISTORY"                       0 KB       0 rows
+. . exported "HOSPITAL"."BILL_ITEM"                          0 KB       0 rows
+. . exported "HOSPITAL"."BILL_ITEM_SOURCE"                   0 KB       0 rows
+. . exported "HOSPITAL"."CLINICAL_HISTORY"                   0 KB       0 rows
+. . exported "HOSPITAL"."CLINICAL_LAB_ORDER_ITEM"            0 KB       0 rows
+. . exported "HOSPITAL"."CLINICAL_MEDICATION_ORDER_ITEM"      0 KB       0 rows
+. . exported "HOSPITAL"."CLINICAL_TREATMENT_ORDER_ITEM"      0 KB       0 rows
+. . exported "HOSPITAL"."CLINICAL_VITAL_ASSESS"              0 KB       0 rows
+. . exported "HOSPITAL"."CLINICAL_VITAL_SAVE_AUDIT"          0 KB       0 rows
+. . exported "HOSPITAL"."CODE_DETAIL"                        0 KB       0 rows
+. . exported "HOSPITAL"."CODE_GROUP"                         0 KB       0 rows
+. . exported "HOSPITAL"."DEPARTMENTS"                        0 KB       0 rows
+. . exported "HOSPITAL"."EMERGENCY_DETAIL"                   0 KB       0 rows
+. . exported "HOSPITAL"."EMERGENCY_TRIAGE"                   0 KB       0 rows
+. . exported "HOSPITAL"."EMPLOYEE_PRIVATE"                   0 KB       0 rows
+. . exported "HOSPITAL"."ENDOSCOPY_EXAM"                     0 KB       0 rows
+. . exported "HOSPITAL"."ENDOSCOPY_EXAM_RESULT"              0 KB       0 rows
+. . exported "HOSPITAL"."IMAGING_EXAM"                       0 KB       0 rows
+. . exported "HOSPITAL"."IMAGING_EXAM_RESULT"                0 KB       0 rows
+. . exported "HOSPITAL"."INPATIENT_ADMISSION"                0 KB       0 rows
+. . exported "HOSPITAL"."INPATIENT_ADMISSION_AUDIT"          0 KB       0 rows
+. . exported "HOSPITAL"."INPATIENT_ADMISSION_DECISION"       0 KB       0 rows
+. . exported "HOSPITAL"."INPATIENT_BED_ASSIGNMENT"           0 KB       0 rows
+. . exported "HOSPITAL"."INPATIENT_BED_ASSIGNMENT_HIS"       0 KB       0 rows
+. . exported "HOSPITAL"."MEDICATION_RECORD"                  0 KB       0 rows
+. . exported "HOSPITAL"."MENU"                               0 KB       0 rows
+. . exported "HOSPITAL"."NURSING_RECORD"                     0 KB       0 rows
+. . exported "HOSPITAL"."PATHOLOGY_EXAM"                     0 KB       0 rows
+. . exported "HOSPITAL"."PATHOLOGY_EXAM_RESULT"              0 KB       0 rows
+. . exported "HOSPITAL"."PATIENT"                        16.73 KB       2 rows
+. . exported "HOSPITAL"."PATIENT_CONSENT"                    0 KB       0 rows
+. . exported "HOSPITAL"."PATIENT_CONSENT_HISTORY"            0 KB       0 rows
+. . exported "HOSPITAL"."PATIENT_FAMILY"                     0 KB       0 rows
+. . exported "HOSPITAL"."PATIENT_FLAG"                       0 KB       0 rows
+. . exported "HOSPITAL"."PATIENT_INFO_HISTORY"               0 KB       0 rows
+. . exported "HOSPITAL"."PATIENT_INSURANCE"              9.382 KB       1 rows
+. . exported "HOSPITAL"."PATIENT_INSURANCE_HISTORY"          0 KB       0 rows
+. . exported "HOSPITAL"."PATIENT_MEMO"                       0 KB       0 rows
+. . exported "HOSPITAL"."PATIENT_RESTRICTION"                0 KB       0 rows
+. . exported "HOSPITAL"."PATIENT_STATUS_HISTORY"             0 KB       0 rows
+. . exported "HOSPITAL"."PAYMENT"                            0 KB       0 rows
+. . exported "HOSPITAL"."PHYSIOLOGICAL_EXAM"                 0 KB       0 rows
+. . exported "HOSPITAL"."PHYSIOLOGICAL_EXAM_RESULT"          0 KB       0 rows
+. . exported "HOSPITAL"."POSITION"                           0 KB       0 rows
+. . exported "HOSPITAL"."POSITIONS"                          0 KB       0 rows
+. . exported "HOSPITAL"."RECEPTION"                      16.63 KB       1 rows
+. . exported "HOSPITAL"."RECEPTION_AUDIT"                    0 KB       0 rows
+. . exported "HOSPITAL"."RECEPTION_CALL_HISTORY"             0 KB       0 rows
+. . exported "HOSPITAL"."RECEPTION_OUTPATIENT_DETAIL"        0 KB       0 rows
+. . exported "HOSPITAL"."RECEPTION_QUALIFICATION_ITEM"       0 KB       0 rows
+. . exported "HOSPITAL"."RECEPTION_QUALIFICATION_SNAP"       0 KB       0 rows
+. . exported "HOSPITAL"."RECEPTION_SETTLEMENT_SNAPSHOT"      0 KB       0 rows
+. . exported "HOSPITAL"."RECEPTION_STATUS_HISTORY"           0 KB       0 rows
+. . exported "HOSPITAL"."RECEPTION_VISIT_CLOSURE"            0 KB       0 rows
+. . exported "HOSPITAL"."RECEPTION_VISIT_CLOSURE_HIS"        0 KB       0 rows
+. . exported "HOSPITAL"."RECEPTION_WAITING_QUEUE"        9.445 KB       1 rows
+. . exported "HOSPITAL"."RESERVATION"                        0 KB       0 rows
+. . exported "HOSPITAL"."RESERVATION_BOOKING_RULE"           0 KB       0 rows
+. . exported "HOSPITAL"."RESERVATION_DOCTOR_SCHEDULE"        0 KB       0 rows
+. . exported "HOSPITAL"."RESERVATION_STATUS_HISTORY"         0 KB       0 rows
+. . exported "HOSPITAL"."RESERVATION_TIME_SLOT"              0 KB       0 rows
+. . exported "HOSPITAL"."RESERVATION_TO_RECEPTION_HIS"       0 KB       0 rows
+. . exported "HOSPITAL"."SPECIMEN_EXAM"                      0 KB       0 rows
+. . exported "HOSPITAL"."SPECIMEN_EXAM_RESULT"               0 KB       0 rows
+. . exported "HOSPITAL"."STAFF"                              0 KB       0 rows
+. . exported "HOSPITAL"."STAFF_CREDENTIAL"                   0 KB       0 rows
+. . exported "HOSPITAL"."STAFF_STATUS_CODES"                 0 KB       0 rows
+. . exported "HOSPITAL"."SUPPORT_TEST_EXECUTION"             0 KB       0 rows
+. . exported "HOSPITAL"."TREATMENT_RESULT"                   0 KB       0 rows
+. . exported "HOSPITAL"."VISIT"                              0 KB       0 rows
+. . exported "HOSPITAL"."VISIT_SOAP_DIAGNOSIS"               0 KB       0 rows
+. . exported "HOSPITAL"."VISIT_SOAP_PRESCRIPTION"            0 KB       0 rows
+Master table "SYSTEM"."SYS_EXPORT_SCHEMA_01" successfully loaded/unloaded
+******************************************************************************
+Dump file set for SYSTEM.SYS_EXPORT_SCHEMA_01 is:
+  /opt/oracle/admin/XE/dpdump/migrate_to_xe/hospital_xe_20260521_212722.dmp
+Job "SYSTEM"."SYS_EXPORT_SCHEMA_01" successfully completed at Thu May 21 12:28:09 2026 elapsed 0 00:00:44

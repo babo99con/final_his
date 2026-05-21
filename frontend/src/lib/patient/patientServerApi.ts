@@ -10,7 +10,7 @@ type ApiResponse<T> = {
 };
 
 const PATIENTS_API_BASE_URL =
-  process.env.NEXT_PUBLIC_PATIENTS_API_BASE_URL?.trim() || "http://localhost:8181";
+  process.env.NEXT_PUBLIC_PATIENTS_API_BASE_URL?.trim() || "http://localhost:8182";
 
 export const fetchInitialPatients = async (accessToken: string): Promise<Patient[]> => {
   const payload = await fetchJson<ApiResponse<Patient[]>>(

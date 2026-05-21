@@ -1,0 +1,362 @@
+services:
+  oracle:
+    image: gvenzl/oracle-xe:21-slim
+    container_name: final-his-oracle
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD:-1111}
+      NLS_LANG: .AL32UTF8
+    ports:
+      - "${ORACLE_PORT:-1521}:1521"
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+      - ./HOSPITAL_EXPORT:/dump
+    healthcheck:
+      test: ["CMD-SHELL", "echo 'select 1 from dual;' | sqlplus -s system/$${ORACLE_PASSWORD}@//localhost:1521/XE | grep -q 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 40
+
+  oracle-restore:
+    image: gvenzl/oracle-xe:21-slim
+    container_name: final-his-oracle-restore
+    depends_on:
+      oracle:
+        condition: service_healthy
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD:-1111}
+      HOSPITAL_DUMP_FILE: ${HOSPITAL_DUMP_FILE:-hospital_xe_20260521_212722.dmp}
+    volumes:
+      - ./HOSPITAL_EXPORT:/dump
+      - ./infra/oracle:/restore:ro
+    entrypoint:
+      - /bin/bash
+      - -lc
+      - |
+        set -e
+        echo 'Waiting for Oracle XE...'
+        until echo 'select 1 from dual;' | sqlplus -s system/$${ORACLE_PASSWORD}@//oracle:1521/XE | grep -q 1; do sleep 5; done
+        echo 'Preparing HOSPITAL schema...'
+        sqlplus -s system/$${ORACLE_PASSWORD}@//oracle:1521/XE @/restore/create_hospital_user.sql
+        echo 'Importing HOSPITAL dump...'
+        impdp system/$${ORACLE_PASSWORD}@//oracle:1521/XE directory=RESTORE_DIR dumpfile=$${HOSPITAL_DUMP_FILE} logfile=hospital_restore.imp.log schemas=HOSPITAL table_exists_action=replace
+        echo 'Oracle restore complete.'
+    restart: "no"
+
+  kafka:
+    image: apache/kafka:latest
+    container_name: final-his-kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:${KAFKA_PORT:-9092}
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "${KAFKA_PORT:-9092}:29092"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    container_name: final-his-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  minio:
+    image: minio/minio:latest
+    container_name: final-his-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio-data:/data
+  minio-init:
+    image: minio/mc:latest
+    container_name: final-his-minio-init
+    depends_on:
+      minio:
+        condition: service_started
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}; do sleep 2; done;
+      mc mb -p local/staff-profile || true;
+      mc mb -p local/hospital-files || true;
+      mc mb -p local/reception-photos || true;
+      exit 0;
+      "
+    restart: "no"
+
+  auth-service:
+    build:
+      context: ./HIS
+      dockerfile: docker/backend.Dockerfile
+      args:
+        SERVICE_DIR: auth-service
+        ARTIFACT_NAME: hospital-0.0.1-SNAPSHOT.war
+    container_name: final-his-auth
+    depends_on:
+      oracle-restore:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      SERVER_PORT: 8586
+      SPRING_DATASOURCE_URL: jdbc:log4jdbc:oracle:thin:@//oracle:1521/XE
+      SPRING_DATASOURCE_USERNAME: HOSPITAL
+      SPRING_DATASOURCE_PASSWORD: 1111
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_PASSWORD:
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD:
+      APP_VERIFY_EMAIL_MOCK: "true"
+      APP_VERIFY_SMS_MOCK: "true"
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_INTERNAL_URL: http://minio:9000
+      MINIO_PUBLIC_URL: http://localhost:${MINIO_API_PORT:-9000}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+    ports:
+      - "${AUTH_PORT:-8586}:8586"
+
+  patient-service:
+    build:
+      context: ./HIS
+      dockerfile: docker/backend.Dockerfile
+      args:
+        SERVICE_DIR: patient-service
+        ARTIFACT_NAME: hospital_patients-0.0.1-SNAPSHOT.jar
+    container_name: final-his-patient
+    depends_on:
+      oracle-restore:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      SERVER_PORT: 8182
+      SPRING_DATASOURCE_URL: jdbc:oracle:thin:@//oracle:1521/XE
+      SPRING_DATASOURCE_USERNAME: HOSPITAL
+      SPRING_DATASOURCE_PASSWORD: 1111
+      SPRING_REDIS_HOST: redis
+      SPRING_DATA_REDIS_HOST: redis
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_PUBLIC_URL: http://localhost:${MINIO_API_PORT:-9000}
+    ports:
+      - "${PATIENT_PORT:-8182}:8182"
+
+  reception-service:
+    build:
+      context: ./HIS
+      dockerfile: docker/backend.Dockerfile
+      args:
+        SERVICE_DIR: reception-service
+        ARTIFACT_NAME: reception-0.0.1-SNAPSHOT.jar
+    container_name: final-his-reception
+    depends_on:
+      oracle-restore:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      SERVER_PORT: 8283
+      SPRING_DATASOURCE_URL: jdbc:oracle:thin:@//oracle:1521/XE
+      SPRING_DATASOURCE_USERNAME: HOSPITAL
+      SPRING_DATASOURCE_PASSWORD: 1111
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_PUBLIC_URL: http://localhost:${MINIO_API_PORT:-9000}
+    ports:
+      - "${RECEPTION_PORT:-8283}:8283"
+
+  staff-service:
+    build:
+      context: ./HIS
+      dockerfile: docker/backend.Dockerfile
+      args:
+        SERVICE_DIR: staff-service
+        ARTIFACT_NAME: Employee-0.0.1-SNAPSHOT.jar
+    container_name: final-his-staff
+    depends_on:
+      oracle-restore:
+        condition: service_completed_successfully
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      SERVER_PORT: 8023
+      SPRING_DATASOURCE_URL: jdbc:oracle:thin:@//oracle:1521/XE
+      SPRING_DATASOURCE_USERNAME: HOSPITAL
+      SPRING_DATASOURCE_PASSWORD: 1111
+      MINIO_URL: http://minio:9000
+      MINIO_PUBLIC_BASE_URL: http://localhost:${MINIO_API_PORT:-9000}
+    ports:
+      - "${STAFF_PORT:-8023}:8023"
+
+  clinical-service:
+    build:
+      context: ./HIS
+      dockerfile: docker/backend.Dockerfile
+      args:
+        SERVICE_DIR: clinical-service
+        ARTIFACT_NAME: hospital_clinical-0.0.1-SNAPSHOT.jar
+    container_name: final-his-clinical
+    depends_on:
+      oracle-restore:
+        condition: service_completed_successfully
+      kafka:
+        condition: service_healthy
+      reception-service:
+        condition: service_started
+      clinic-support-service:
+        condition: service_started
+      billing-service:
+        condition: service_started
+    environment:
+      SERVER_PORT: 8090
+      SPRING_DATASOURCE_URL: jdbc:oracle:thin:@//oracle:1521/XE
+      SPRING_DATASOURCE_USERNAME: HOSPITAL
+      SPRING_DATASOURCE_PASSWORD: 1111
+      KAFKA_BROKERS: kafka
+      KAFKA_BROKER_PORT: 9092
+      RECEPTION_API_BASE_URL: http://reception-service:8283
+      CLINICAL_SUPPORT_API_BASE_URL: http://clinic-support-service:8189
+      BILLING_API_BASE_URL: http://billing-service:8081
+    ports:
+      - "${CLINICAL_PORT:-8090}:8090"
+
+  clinic-support-service:
+    build:
+      context: ./HIS
+      dockerfile: docker/backend.Dockerfile
+      args:
+        SERVICE_DIR: clinic-support-service
+        ARTIFACT_NAME: medical_support-0.0.1-SNAPSHOT.war
+    container_name: final-his-clinic-support
+    depends_on:
+      oracle-restore:
+        condition: service_completed_successfully
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      SERVER_PORT: 8189
+      SPRING_DATASOURCE_URL: jdbc:log4jdbc:oracle:thin:@//oracle:1521/XE
+      SPRING_DATASOURCE_USERNAME: HOSPITAL
+      SPRING_DATASOURCE_PASSWORD: 1111
+      KAFKA_BROKERS: kafka
+      KAFKA_BROKER_PORT: 9092
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      INTEGRATION_RECEPTION_BASE_URL: http://reception-service:8283
+      INTEGRATION_CLINICAL_BASE_URL: http://clinical-service:8090
+      INTEGRATION_BILLING_BASE_URL: http://billing-service:8081
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_INTERNAL_URL: http://minio:9000
+      MINIO_PUBLIC_URL: http://localhost:${MINIO_API_PORT:-9000}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+    ports:
+      - "${CLINIC_SUPPORT_PORT:-8189}:8189"
+
+  billing-service:
+    build:
+      context: ./HIS
+      dockerfile: docker/backend.Dockerfile
+      args:
+        SERVICE_DIR: billing-service
+        ARTIFACT_NAME: hospital-billing-backend-0.0.1-SNAPSHOT.jar
+    container_name: final-his-billing
+    depends_on:
+      oracle-restore:
+        condition: service_completed_successfully
+      kafka:
+        condition: service_healthy
+      patient-service:
+        condition: service_started
+    environment:
+      SERVER_PORT: 8081
+      SPRING_DATASOURCE_URL: jdbc:oracle:thin:@//oracle:1521/XE
+      SPRING_DATASOURCE_USERNAME: HOSPITAL
+      SPRING_DATASOURCE_PASSWORD: 1111
+      KAFKA_BROKERS: kafka
+      KAFKA_BROKER_PORT: 9092
+      PATIENT_API_BASE_URL: http://patient-service:8182
+      TOSS_SECRET_KEY: ${TOSS_SECRET_KEY:-}
+    ports:
+      - "${BILLING_PORT:-8081}:8081"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_AUTH_API_BASE_URL: http://localhost:${AUTH_PORT:-8586}
+        NEXT_PUBLIC_MENU_API_BASE_URL: http://localhost:${AUTH_PORT:-8586}
+        NEXT_PUBLIC_NOTIFICATION_API_BASE_URL: http://localhost:${AUTH_PORT:-8586}
+        NEXT_PUBLIC_BILLING_API_BASE_URL: http://localhost:${BILLING_PORT:-8081}
+        NEXT_PUBLIC_STAFF_API_BASE_URL: http://localhost:${STAFF_PORT:-8023}
+        NEXT_PUBLIC_PATIENTS_API_BASE_URL: http://localhost:${PATIENT_PORT:-8182}
+        NEXT_PUBLIC_RECEPTION_API_BASE_URL: http://localhost:${RECEPTION_PORT:-8283}
+        NEXT_PUBLIC_RECEPTION_FALLBACK_BASE_URL: http://localhost:${RECEPTION_PORT:-8283}
+        NEXT_PUBLIC_CLINICAL_API_BASE_URL: http://localhost:${CLINICAL_PORT:-8090}
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:${CLINICAL_PORT:-8090}
+        NEXT_PUBLIC_NURSING_API_BASE_URL: http://localhost:${CLINIC_SUPPORT_PORT:-8189}
+        NEXT_PUBLIC_MEDICAL_SUPPORT_RECORD_API_BASE_URL: http://localhost:${CLINIC_SUPPORT_PORT:-8189}
+        NEXT_PUBLIC_API_BASE: http://localhost:${RECEPTION_PORT:-8283}
+        NEXT_PUBLIC_TOSS_CLIENT_KEY: ${NEXT_PUBLIC_TOSS_CLIENT_KEY:-test_ck_jExPeJWYVQjgRQjvlGNor49R5gvN}
+        AUTH_API_INTERNAL_URL: http://auth-service:8586
+        PATIENTS_API_INTERNAL_URL: http://patient-service:8182
+        RECEPTION_API_INTERNAL_URL: http://reception-service:8283
+        BILLING_API_INTERNAL_URL: http://billing-service:8081
+        NOTIFICATION_API_INTERNAL_URL: http://auth-service:8586
+    container_name: final-his-frontend
+    depends_on:
+      auth-service:
+        condition: service_started
+      patient-service:
+        condition: service_started
+      reception-service:
+        condition: service_started
+      staff-service:
+        condition: service_started
+      clinical-service:
+        condition: service_started
+      clinic-support-service:
+        condition: service_started
+      billing-service:
+        condition: service_started
+    ports:
+      - "${FRONTEND_PORT:-3001}:3001"
+
+volumes:
+  oracle-data:
+  minio-data:

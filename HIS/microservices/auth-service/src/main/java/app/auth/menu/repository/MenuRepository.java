@@ -21,12 +21,12 @@ public interface MenuRepository extends JpaRepository<AuthMenu, Integer> {
             m.IS_ACTIVE,
             m.CREATED_AT,
             m.UPDATED_AT
-        FROM CMH.AUTH_USER u
-        JOIN CMH.MENU m ON m.IS_ACTIVE = 'Y'
-        LEFT JOIN CMH.AUTH_ROLE_MENU_PERMISSION rp
+        FROM HOSPITAL.AUTH_USER u
+        JOIN HOSPITAL.CMH_MENU m ON m.IS_ACTIVE = 'Y'
+        LEFT JOIN HOSPITAL.AUTH_ROLE_MENU_PERMISSION rp
             ON rp.ROLE_CODE = u.ROLE_CODE
            AND rp.MENU_ID = m.MENU_ID
-        LEFT JOIN CMH.AUTH_USER_MENU_PERMISSION up
+        LEFT JOIN HOSPITAL.AUTH_USER_MENU_PERMISSION up
             ON up.USER_ID = u.ID
            AND up.MENU_ID = m.MENU_ID
         WHERE LOWER(u.LOGIN_ID) = LOWER(:username)
@@ -38,12 +38,12 @@ public interface MenuRepository extends JpaRepository<AuthMenu, Integer> {
     @Query(value = """
         SELECT DISTINCT
             m.PATH
-        FROM CMH.AUTH_USER u
-        JOIN CMH.MENU m ON m.IS_ACTIVE = 'Y'
-        LEFT JOIN CMH.AUTH_ROLE_MENU_PERMISSION rp
+        FROM HOSPITAL.AUTH_USER u
+        JOIN HOSPITAL.CMH_MENU m ON m.IS_ACTIVE = 'Y'
+        LEFT JOIN HOSPITAL.AUTH_ROLE_MENU_PERMISSION rp
             ON rp.ROLE_CODE = u.ROLE_CODE
            AND rp.MENU_ID = m.MENU_ID
-        LEFT JOIN CMH.AUTH_USER_MENU_PERMISSION up
+        LEFT JOIN HOSPITAL.AUTH_USER_MENU_PERMISSION up
             ON up.USER_ID = u.ID
            AND up.MENU_ID = m.MENU_ID
         WHERE LOWER(u.LOGIN_ID) = LOWER(:username)
