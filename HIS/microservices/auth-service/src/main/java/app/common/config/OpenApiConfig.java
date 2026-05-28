@@ -1,4 +1,4 @@
-package kr.co.seoulit.common.config;
+package app.common.config;
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
@@ -12,8 +12,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @OpenAPIDefinition(
         info = @Info(
-                title = "접수 서비스 API 문서",
-                description = "외래, 응급, 입원, 예약 접수와 접수 상태 이력을 관리하는 서비스입니다. 보호 API는 auth-service에서 검증한 JSESSIONID 세션 쿠키가 필요합니다.",
+                title = "인증 서비스 API 문서",
+                description = "로그인, 로그아웃, 내 정보, 메뉴 권한, 세션 검증을 제공하는 인증 서비스입니다. 로그인 성공 시 서버 세션이 생성되고 이후 요청은 JSESSIONID 쿠키로 인증됩니다.",
                 version = "v1"
         ),
         servers = @Server(url = "/", description = "현재 서버"),
@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Configuration;
         type = SecuritySchemeType.APIKEY,
         in = SecuritySchemeIn.COOKIE,
         paramName = "JSESSIONID",
-        description = "로그인 후 발급되는 서버 세션 쿠키입니다. 세션이 없거나 만료되면 401 응답이 반환됩니다."
+        description = "로그인 후 발급되는 서버 세션 쿠키입니다. 보호 API 호출 시 이 쿠키가 필요합니다."
 )
 public class OpenApiConfig {
 }

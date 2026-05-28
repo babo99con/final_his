@@ -1,4 +1,4 @@
-package kr.co.seoulit.common.config;
+package com.app.medical_support.config;
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
@@ -12,8 +12,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @OpenAPIDefinition(
         info = @Info(
-                title = "접수 서비스 API 문서",
-                description = "외래, 응급, 입원, 예약 접수와 접수 상태 이력을 관리하는 서비스입니다. 보호 API는 auth-service에서 검증한 JSESSIONID 세션 쿠키가 필요합니다.",
+                title = "진료 지원 서비스 API 문서",
+                description = "검사 실행, 검사 결과, 처치, 투약 기록과 진료 지원 연동 기능을 제공하는 서비스입니다. 보호 API는 auth-service에서 검증한 JSESSIONID 세션 쿠키가 필요합니다.",
                 version = "v1"
         ),
         servers = @Server(url = "/", description = "현재 서버"),
