@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.servers.Server;
 import org.springframework.context.annotation.Configuration;
 
+// 이 서비스의 보호 API는 auth-service가 검증한 JSESSIONID 세션 쿠키를 기준으로 접근을 허용합니다.
 @Configuration
 @OpenAPIDefinition(
         info = @Info(

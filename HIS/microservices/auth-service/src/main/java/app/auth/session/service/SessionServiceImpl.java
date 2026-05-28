@@ -44,6 +44,7 @@ public class SessionServiceImpl implements SessionService {
         session.setIsRevoked("N");
         session.setRevokedAt(null);
 
+        // 한 사용자에게 활성 세션을 하나만 허용해 이전 로그인 세션을 명확히 폐기합니다.
         revokeActiveSessions(account.getId(), now);
         sessionRepository.save(session);
     }
@@ -64,6 +65,7 @@ public class SessionServiceImpl implements SessionService {
                 now
         );
         if (alive) {
+            // 검증에 성공한 요청은 마지막 접근 시각을 갱신해 운영 중 추적하기 쉽게 합니다.
             sessionRepository.findById(sid).ifPresent(session -> {
                 session.setLastAccessAt(now);
                 sessionRepository.save(session);
