@@ -1,7 +1,7 @@
 package app.auth.session.service;
 
 import app.auth.common.entity.AuthAccount;
-import app.auth.register.repository.RegisterAccountRepository;
+import app.auth.common.repository.AuthAccountRepository;
 import app.auth.session.entity.AuthSession;
 import app.auth.session.repository.SessionRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,15 +14,15 @@ import java.time.LocalDateTime;
 @Service
 public class SessionServiceImpl implements SessionService {
 
-    private final RegisterAccountRepository registerAccountRepository;
+    private final AuthAccountRepository authAccountRepository;
     private final SessionRepository sessionRepository;
 
     @Value("${app.auth.session.absolute-seconds:43200}")
     private long absoluteSeconds;
 
-    public SessionServiceImpl(RegisterAccountRepository registerAccountRepository,
+    public SessionServiceImpl(AuthAccountRepository authAccountRepository,
                               SessionRepository sessionRepository) {
-        this.registerAccountRepository = registerAccountRepository;
+        this.authAccountRepository = authAccountRepository;
         this.sessionRepository = sessionRepository;
     }
 
@@ -121,7 +121,7 @@ public class SessionServiceImpl implements SessionService {
             return null;
         }
 
-        return registerAccountRepository.findByUsernameIgnoreCase(normalizedUsername).orElse(null);
+        return authAccountRepository.findByUsernameIgnoreCase(normalizedUsername).orElse(null);
     }
 
     private void revokeActiveSessions(String userId, LocalDateTime now) {

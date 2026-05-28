@@ -8,14 +8,6 @@ type LoginRequest = {
   password: string;
 };
 
-type RegisterRequest = {
-  username: string;
-  password: string;
-  fullName: string;
-  email?: string;
-  phone?: string;
-};
-
 type PasswordResetPrepareRequest = {
   userIdentifier: string;
   name: string;
@@ -55,7 +47,6 @@ const api = axios.create({
 applyAuthInterceptors(api, {
   skipRedirectPaths: [
     "/api/auth/login",
-    "/api/auth/register",
     "/api/auth/password/reset/prepare",
     "/api/auth/password/reset/confirm",
   ],
@@ -115,13 +106,6 @@ export const loginApi = async (payload: LoginRequest): Promise<LoginResult> => {
     throw new Error(res.data.message || "濡쒓렇?몄뿉 ?ㅽ뙣?덉뒿?덈떎.");
   }
   return res.data.result;
-};
-
-export const registerApi = async (payload: RegisterRequest): Promise<void> => {
-  const res = await api.post<ApiResponse<void>>("/api/auth/register", payload);
-  if (!res.data.success) {
-    throw new Error(res.data.message || "媛???좎껌???ㅽ뙣?덉뒿?덈떎.");
-  }
 };
 
 export const getMeApi = async (): Promise<AuthUser> => {
@@ -212,24 +196,3 @@ export const confirmPasswordReset = async (
   }
 };
 
-export const approveRegisterRequestApi = async (staffId: number): Promise<void> => {
-  const res = await api.post<ApiResponse<void>>(`/api/auth/register-requests/${staffId}/approve`);
-  if (!res.data.success) {
-    throw new Error(res.data.message || "媛???뱀씤 泥섎━???ㅽ뙣?덉뒿?덈떎.");
-  }
-};
-
-export const rejectRegisterRequestApi = async (staffId: number): Promise<void> => {
-  const res = await api.post<ApiResponse<void>>(`/api/auth/register-requests/${staffId}/reject`);
-  if (!res.data.success) {
-    throw new Error(res.data.message || "媛??諛섎젮 泥섎━???ㅽ뙣?덉뒿?덈떎.");
-  }
-};
-
-export const checkUsernameAvailabilityApi = async (username: string): Promise<boolean> => {
-  const res = await api.get<ApiResponse<boolean>>("/api/auth/register/check-username", { params: { username } });
-  if (!res.data.success || typeof res.data.result !== "boolean") {
-    throw new Error(res.data.message || "?꾩씠??以묐났 ?뺤씤???ㅽ뙣?덉뒿?덈떎.");
-  }
-  return res.data.result;
-};

@@ -9,7 +9,7 @@ import app.auth.login.dto.LoginResponse;
 import app.auth.login.dto.LoginResult;
 import app.auth.login.mapper.LoginMapper;
 import app.auth.login.validator.LoginValidator;
-import app.auth.register.repository.RegisterAccountRepository;
+import app.auth.common.repository.AuthAccountRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -21,7 +21,7 @@ public class LoginServiceImpl implements LoginService {
 
     private static final String INITIAL_PASSWORD = "1111";
 
-    private final RegisterAccountRepository registerAccountRepository;
+    private final AuthAccountRepository authAccountRepository;
     private final AuthUserProfileRepository authUserProfileRepository;
     private final LoginMapper loginMapper;
     private final LoginValidator loginValidator;
@@ -31,7 +31,7 @@ public class LoginServiceImpl implements LoginService {
         loginValidator.validate(request);
 
         String username = normalizeUsername(request.getUsername());
-        AuthAccount account = registerAccountRepository.findByUsernameIgnoreCase(username).orElse(null);
+        AuthAccount account = authAccountRepository.findByUsernameIgnoreCase(username).orElse(null);
         validateLoginCredentials(request, account);
 
         AuthUserProfileInfo profileInfo = readProfileInfo(account);

@@ -13,7 +13,6 @@
 | /api/auth/menu | GET | Returns the hierarchical menu tree granted to the caller. |
 | /api/auth/permission/users | GET/POST | Query or update user menu permissions. |
 | /api/auth/permission/roles | GET/POST | Query or update role menu permissions. |
-| /api/auth/register | POST | Submit a registration request for approval. |
 | /api/auth/session/validate | GET | Validates the current server-side session. |
 
 `MenuAccessFilter`媛 `/api/**` 寃쎈줈瑜?紐⑤몢 媛먯떥硫? 硫붾돱 湲곕컲 ?덉슜 紐⑸줉??寃利앺빀?덈떎.

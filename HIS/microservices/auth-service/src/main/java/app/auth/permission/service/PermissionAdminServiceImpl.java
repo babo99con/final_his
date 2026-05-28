@@ -20,8 +20,8 @@ import app.auth.permission.repository.AuthRoleRepository;
 import app.auth.permission.repository.AuthUserMenuPermissionRepository;
 import app.auth.permission.repository.PermissionAdminRepository;
 import app.auth.common.entity.AuthAccount;
+import app.auth.common.repository.AuthAccountRepository;
 import app.auth.common.repository.AuthUserProfileRepository;
-import app.auth.register.repository.RegisterAccountRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,7 +42,7 @@ public class PermissionAdminServiceImpl implements PermissionAdminService {
 
     private final AuthRoleRepository authRoleRepository;
     private final AuthUserProfileRepository authUserProfileRepository;
-    private final RegisterAccountRepository registerAccountRepository;
+    private final AuthAccountRepository authAccountRepository;
     private final AuthRoleMenuPermissionRepository authRoleMenuPermissionRepository;
     private final AuthUserMenuPermissionRepository authUserMenuPermissionRepository;
     private final PermissionAdminRepository permissionAdminRepository;
@@ -163,7 +163,7 @@ public class PermissionAdminServiceImpl implements PermissionAdminService {
     }
 
     private AuthAccount findAccountOrThrow(String userId) {
-        AuthAccount account = registerAccountRepository.findById(userId).orElse(null);
+        AuthAccount account = authAccountRepository.findById(userId).orElse(null);
         if (account == null) {
             throw new IllegalArgumentException("AUTH_ACCOUNT_NOT_FOUND");
         }
