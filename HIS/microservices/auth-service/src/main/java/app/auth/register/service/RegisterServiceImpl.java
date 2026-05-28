@@ -2,9 +2,7 @@ package app.auth.register.service;
 
 import app.auth.common.PasswordHashUtil;
 import app.auth.common.entity.AuthAccount;
-import app.auth.oauth.entity.SocialVerification;
 import app.auth.register.dto.PendingRegisterRequestDto;
-import app.auth.oauth.repository.OAuthAccountRepository;
 import app.auth.register.dto.RegisterRequest;
 import app.auth.register.mapper.RegisterMapper;
 import app.auth.register.repository.RegisterAccountRepository;
@@ -34,7 +32,6 @@ public class RegisterServiceImpl implements RegisterService {
     private final RegisterValidator registerValidator;
     private final VerificationRepository verificationRepository;
     private final VerificationValidator verificationValidator;
-    private final OAuthAccountRepository oAuthRepository;
 
     @Override
     @Transactional
@@ -45,22 +42,15 @@ public class RegisterServiceImpl implements RegisterService {
         String username = normalizeUsername(request.getUsername());
         validateUsernameAvailable(username);
 
-        String socialToken = resolveSocialToken(request);
-        SocialVerification socialVerification = readSocialVerification(socialToken);
-
         String fullName = trim(request.getFullName());
         String email = trim(request.getEmail());
         String phone = trim(request.getPhone());
 
-        if (socialVerification == null) {
-            validateBasicRegisterFields(fullName, email, phone);
-            email = verificationValidator.normalizeEmail(email);
-            phone = verificationValidator.normalizePhone(phone);
-            validateRegisterEmailVerification(email, request.getEmailVerificationToken());
-            validateRegisterPhoneVerification(phone, request.getPhoneVerificationToken());
-        } else {
-            fullName = chooseSocialFullName(fullName, socialVerification, username);
-        }
+        validateBasicRegisterFields(fullName, email, phone);
+        email = verificationValidator.normalizeEmail(email);
+        phone = verificationValidator.normalizePhone(phone);
+        validateRegisterEmailVerification(email, request.getEmailVerificationToken());
+        validateRegisterPhoneVerification(phone, request.getPhoneVerificationToken());
 
         String roleCode = normalizeRoleCode(request.getRole());
         registerValidator.validateRole(roleCode);
@@ -76,7 +66,7 @@ public class RegisterServiceImpl implements RegisterService {
         registerAccountRepository.save(account);
         registerEmployeeRepository.insertEmployee(staffId, departmentId, fullName, phone, email, "PENDING_APPROVAL");
 
-        consumeVerificationResource(socialToken, request.getEmailVerificationToken(), request.getPhoneVerificationToken());
+        consumeVerificationResource(request.getEmailVerificationToken(), request.getPhoneVerificationToken());
     }
 
     @Override
@@ -118,28 +108,6 @@ public class RegisterServiceImpl implements RegisterService {
         }
     }
 
-    private String resolveSocialToken(RegisterRequest request) {
-        String socialToken = trim(request.getSocialVerifyToken());
-        if (StringUtils.hasText(socialToken)) {
-            return socialToken;
-        }
-
-        return trim(request.getNaverVerifyToken());
-    }
-
-    private SocialVerification readSocialVerification(String socialToken) {
-        if (!StringUtils.hasText(socialToken)) {
-            return null;
-        }
-
-        SocialVerification socialVerification = oAuthRepository.readSocialVerification(socialToken);
-        if (socialVerification == null || !StringUtils.hasText(socialVerification.providerId())) {
-            throw new IllegalArgumentException("AUTH_SOCIAL_TOKEN_INVALID");
-        }
-
-        return socialVerification;
-    }
-
     private void validateBasicRegisterFields(String fullName, String email, String phone) {
         if (!StringUtils.hasText(fullName)) {
             throw new IllegalArgumentException("AUTH_FULL_NAME_REQUIRED");
@@ -166,25 +134,7 @@ public class RegisterServiceImpl implements RegisterService {
         }
     }
 
-    private String chooseSocialFullName(String fullName, SocialVerification socialVerification, String username) {
-        if (StringUtils.hasText(fullName)) {
-            return fullName;
-        }
-
-        String socialName = trim(socialVerification.name());
-        if (StringUtils.hasText(socialName)) {
-            return socialName;
-        }
-
-        return username;
-    }
-
-    private void consumeVerificationResource(String socialToken, String emailVerificationToken, String phoneVerificationToken) {
-        if (StringUtils.hasText(socialToken)) {
-            oAuthRepository.consumeSocialVerification(socialToken);
-            return;
-        }
-
+    private void consumeVerificationResource(String emailVerificationToken, String phoneVerificationToken) {
         verificationRepository.consumeVerifiedToken("email", trim(emailVerificationToken));
         verificationRepository.consumeVerifiedToken("phone", trim(phoneVerificationToken));
     }

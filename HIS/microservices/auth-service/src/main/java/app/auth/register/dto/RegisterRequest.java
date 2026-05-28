@@ -15,6 +15,4 @@ public class RegisterRequest {
     private String department;
     private String emailVerificationToken;
     private String phoneVerificationToken;
-    private String naverVerifyToken;
-    private String socialVerifyToken;
 }

@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 
 @Service
@@ -17,15 +16,6 @@ public class SessionServiceImpl implements SessionService {
 
     private final RegisterAccountRepository registerAccountRepository;
     private final SessionRepository sessionRepository;
-
-    @Value("${app.auth.cookie-max-age-seconds:43200}")
-    private int cookieMaxAge;
-
-    @Value("${app.auth.cookie-secure:false}")
-    private boolean cookieSecure;
-
-    @Value("${app.auth.refresh-cookie-max-age-seconds:1209600}")
-    private int refreshCookieMaxAge;
 
     @Value("${app.auth.session.absolute-seconds:43200}")
     private long absoluteSeconds;
@@ -37,28 +27,8 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
-    public void addAuthCookie(HttpServletResponse response, String token) {
-        response.addHeader("Set-Cookie", buildCookieHeader(ACCESS_TOKEN_COOKIE, token, cookieMaxAge, true));
-    }
-
-    @Override
-    public void clearAuthCookie(HttpServletResponse response) {
-        response.addHeader("Set-Cookie", buildCookieHeader(ACCESS_TOKEN_COOKIE, "", 0, true));
-    }
-
-    @Override
-    public void addRefreshCookie(HttpServletResponse response, String token) {
-        response.addHeader("Set-Cookie", buildCookieHeader(REFRESH_TOKEN_COOKIE, token, refreshCookieMaxAge, true));
-    }
-
-    @Override
-    public void clearRefreshCookie(HttpServletResponse response) {
-        response.addHeader("Set-Cookie", buildCookieHeader(REFRESH_TOKEN_COOKIE, "", 0, true));
-    }
-
-    @Override
     @Transactional
-    public void startSession(String username, String sid, String accessTokenJti, String refreshTokenJti) {
+    public void startSession(String username, String sid) {
         AuthAccount account = findAccount(username);
         if (account == null) {
             return;
@@ -68,8 +38,6 @@ public class SessionServiceImpl implements SessionService {
         AuthSession session = new AuthSession();
         session.setSessionId(sid);
         session.setUserId(account.getId());
-        session.setAccessTokenJti(accessTokenJti);
-        session.setRefreshTokenJti(refreshTokenJti);
         session.setLoginAt(now);
         session.setLastAccessAt(now);
         session.setExpiresAt(createExpiresAt(now));
@@ -82,17 +50,16 @@ public class SessionServiceImpl implements SessionService {
 
     @Override
     @Transactional
-    public boolean isAccessTokenAliveAndTouch(String username, String sid, String accessTokenJti) {
+    public boolean isSessionAliveAndTouch(String username, String sid) {
         AuthAccount account = findAccount(username);
         if (account == null) {
             return false;
         }
 
         LocalDateTime now = LocalDateTime.now();
-        boolean alive = sessionRepository.existsBySessionIdAndUserIdAndAccessTokenJtiAndIsRevokedAndExpiresAtAfter(
+        boolean alive = sessionRepository.existsBySessionIdAndUserIdAndIsRevokedAndExpiresAtAfter(
                 sid,
                 account.getId(),
-                accessTokenJti,
                 "N",
                 now
         );
@@ -107,24 +74,8 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
-    public boolean isRefreshTokenAlive(String username, String sid, String refreshTokenJti) {
-        AuthAccount account = findAccount(username);
-        if (account == null) {
-            return false;
-        }
-
-        return sessionRepository.existsBySessionIdAndUserIdAndRefreshTokenJtiAndIsRevokedAndExpiresAtAfter(
-                sid,
-                account.getId(),
-                refreshTokenJti,
-                "N",
-                LocalDateTime.now()
-        );
-    }
-
-    @Override
     @Transactional
-    public void rotateSessionTokens(String username, String sid, String accessTokenJti, String refreshTokenJti) {
+    public void invalidateSession(String username, String sid) {
         AuthAccount account = findAccount(username);
         if (account == null) {
             return;
@@ -133,17 +84,16 @@ public class SessionServiceImpl implements SessionService {
         LocalDateTime now = LocalDateTime.now();
         sessionRepository.findBySessionIdAndUserIdAndIsRevoked(sid, account.getId(), "N")
                 .ifPresent(session -> {
-                    session.setAccessTokenJti(accessTokenJti);
-                    session.setRefreshTokenJti(refreshTokenJti);
                     session.setLastAccessAt(now);
-                    session.setExpiresAt(createExpiresAt(now));
+                    session.setIsRevoked("Y");
+                    session.setRevokedAt(now);
                     sessionRepository.save(session);
                 });
     }
 
     @Override
     @Transactional
-    public void invalidateSession(String username) {
+    public void invalidateUserSessions(String username) {
         AuthAccount account = findAccount(username);
         if (account == null) {
             return;
@@ -151,29 +101,6 @@ public class SessionServiceImpl implements SessionService {
 
         LocalDateTime now = LocalDateTime.now();
         revokeActiveSessions(account.getId(), now);
-    }
-
-    private String buildCookieHeader(String name, String token, int maxAge, boolean httpOnly) {
-        String value = "";
-        if (StringUtils.hasText(token)) {
-            value = token;
-        }
-
-        StringBuilder builder = new StringBuilder();
-        builder.append(name).append("=").append(value);
-        builder.append("; Path=/");
-        builder.append("; Max-Age=").append(maxAge);
-        builder.append("; SameSite=Lax");
-
-        if (httpOnly) {
-            builder.append("; HttpOnly");
-        }
-
-        if (cookieSecure) {
-            builder.append("; Secure");
-        }
-
-        return builder.toString();
     }
 
     private String normalizeUsername(String username) {

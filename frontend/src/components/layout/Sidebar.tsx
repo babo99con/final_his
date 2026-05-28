@@ -27,7 +27,6 @@ import PolicyIcon from "@mui/icons-material/Policy";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import type { MenuNode } from "@/types/menu";
 import { normalizeMenuPath } from "@/lib/navigation/menuPath";
-import { getAccessToken } from "@/lib/auth/session";
 
 const iconMap: Record<string, React.ReactNode> = {
   Home: <HomeRoundedIcon fontSize="small" />,
@@ -266,13 +265,9 @@ export default function Sidebar({ menus: initialMenus, width = 240 }: SidebarPro
     }
 
     let mounted = true;
-    const token = getAccessToken();
-    const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
-
     fetch("/api/session/menus", {
       cache: "no-store",
       credentials: "same-origin",
-      headers,
     })
       .then((response) => (response.ok ? response.json() : null))
       .then((payload: { menus?: MenuNode[] } | null) => {

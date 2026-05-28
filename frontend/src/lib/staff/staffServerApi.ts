@@ -37,8 +37,6 @@ type PositionRaw = Partial<{
   positionTitle: string | null;
 }>;
 
-export const ACCESS_TOKEN_COOKIE_NAME = "his_access_token";
-
 const toBaseUrl = () => STAFF_API_BASE_URL.replace(/\/+$/, "");
 
 const toUrl = (path: string) =>
@@ -52,12 +50,12 @@ const parseJson = async <T>(response: Response): Promise<T | null> => {
   }
 };
 
-const requestStaffApi = async <T>(path: string, accessToken: string): Promise<T> => {
+const requestStaffApi = async <T>(path: string, sessionCookie: string): Promise<T> => {
   const response = await fetch(toUrl(path), {
     cache: "no-store",
     headers: {
       Accept: "application/json",
-      Authorization: `Bearer ${accessToken}`,
+      Cookie: sessionCookie,
     },
   });
   const payload = await parseJson<StaffApiResponse<T>>(response);
@@ -73,15 +71,15 @@ const requestStaffApi = async <T>(path: string, accessToken: string): Promise<T>
 };
 
 export const fetchInitialStaffSummary = async (
-  accessToken: string
+  sessionCookie: string
 ): Promise<StaffSummaryItem[]> => {
-  return requestStaffApi<StaffSummaryItem[]>("/api/staff/list", accessToken);
+  return requestStaffApi<StaffSummaryItem[]>("/api/staff/list", sessionCookie);
 };
 
 export const fetchInitialStaffDepartments = async (
-  accessToken: string
+  sessionCookie: string
 ): Promise<StaffDepartmentSummaryItem[]> => {
-  const rows = await requestStaffApi<StaffDepartmentRaw[]>("/api/staff/list", accessToken);
+  const rows = await requestStaffApi<StaffDepartmentRaw[]>("/api/staff/list", sessionCookie);
   const seen = new Set<string>();
 
   return rows.reduce<StaffDepartmentSummaryItem[]>((acc, item) => {
@@ -111,16 +109,16 @@ export const fetchInitialStaffDepartments = async (
 };
 
 export const fetchInitialStaffLocations = async (
-  _accessToken: string
+  _sessionCookie: string
 ): Promise<StaffLocationSummaryItem[]> => {
-  void _accessToken;
+  void _sessionCookie;
   return [];
 };
 
 export const fetchInitialPositionSummary = async (
-  accessToken: string
+  sessionCookie: string
 ): Promise<PositionResponse[]> => {
-  const rows = await requestStaffApi<PositionRaw[]>("/api/staff/list", accessToken);
+  const rows = await requestStaffApi<PositionRaw[]>("/api/staff/list", sessionCookie);
   const seen = new Set<string>();
 
   return rows.reduce<PositionResponse[]>((acc, item) => {

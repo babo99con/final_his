@@ -6,6 +6,4 @@ import app.auth.login.dto.LoginResult;
 public interface LoginService {
 
     LoginResult login(LoginRequest request);
-
-    LoginResult refresh(String refreshToken);
 }

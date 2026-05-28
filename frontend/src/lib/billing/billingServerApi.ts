@@ -42,11 +42,11 @@ const unwrap = <T>(payload: ApiResponse<T>, fallback: string): T => {
 };
 
 export const fetchInitialBillingStats = async (
-  accessToken: string
+  sessionCookie: string
 ): Promise<ServerBillingStats> => {
   const payload = await fetchJson<ApiResponse<ServerBillingStats>>(
     `${toBaseUrl()}/api/billing/stats`,
-    accessToken
+    sessionCookie
   );
   return unwrap(payload, "수납 통계 조회에 실패했습니다.");
 };
@@ -59,7 +59,7 @@ export type BillingListQuery = {
 };
 
 export const fetchInitialBillingList = async (
-  accessToken: string,
+  sessionCookie: string,
   query: BillingListQuery
 ): Promise<ServerBillSummary[]> => {
   const url = new URL(`${toBaseUrl()}/api/billing/bills`);
@@ -78,7 +78,7 @@ export const fetchInitialBillingList = async (
 
   const payload = await fetchJson<ApiResponse<ServerBillSummary[]>>(
     url.toString(),
-    accessToken
+    sessionCookie
   );
   return unwrap(payload, "청구 목록 조회에 실패했습니다.");
 };

@@ -25,12 +25,6 @@ public class AuthSession extends AuditableEntity {
     @Column(name = "USER_ID", nullable = false, length = 20)
     private String userId;
 
-    @Column(name = "ACCESS_TOKEN_JTI", length = 36)
-    private String accessTokenJti;
-
-    @Column(name = "REFRESH_TOKEN_JTI", length = 36)
-    private String refreshTokenJti;
-
     @Column(name = "LOGIN_AT", nullable = false)
     private LocalDateTime loginAt;
 

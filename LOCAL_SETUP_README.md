@@ -301,12 +301,14 @@ Invoke-WebRequest -Uri "http://localhost:8586/api/auth/login" -Method Post -Cont
 주요 API 확인:
 
 ```powershell
-$headers=@{Authorization='Bearer dummy'}
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$body='{ "username":"26-6001", "password":"1111" }'
+Invoke-WebRequest -Uri "http://localhost:8586/api/auth/login" -Method Post -ContentType "application/json" -Body $body -WebSession $session -UseBasicParsing
 
-Invoke-WebRequest -Uri "http://localhost:8182/api/patients" -Headers $headers -UseBasicParsing
-Invoke-WebRequest -Uri "http://localhost:8283/api/receptions" -Headers $headers -UseBasicParsing
-Invoke-WebRequest -Uri "http://localhost:8090/api/clinical/reception-queue" -Headers $headers -UseBasicParsing
-Invoke-WebRequest -Uri "http://localhost:8081/api/billing/bills" -Headers $headers -UseBasicParsing
+Invoke-WebRequest -Uri "http://localhost:8182/api/patients" -WebSession $session -UseBasicParsing
+Invoke-WebRequest -Uri "http://localhost:8283/api/receptions" -WebSession $session -UseBasicParsing
+Invoke-WebRequest -Uri "http://localhost:8090/api/clinical/reception-queue" -WebSession $session -UseBasicParsing
+Invoke-WebRequest -Uri "http://localhost:8081/api/billing/bills" -WebSession $session -UseBasicParsing
 Invoke-WebRequest -Uri "http://localhost:8189/swagger-ui/index.html" -UseBasicParsing
 ```
 
@@ -384,4 +386,3 @@ HIS/.codex-runtime-logs/
 토스 secret key
 개인 PC 절대경로가 들어간 임시 파일
 ```
-

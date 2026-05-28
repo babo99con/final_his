@@ -96,7 +96,6 @@ services:
       MINIO_SECRET_KEY: minioadmin123
       MINIO_BUCKET_STAFF: staff-profile
       MINIO_BUCKET_PATIENT: hospital-files
-      APP_JWT_SECRET: hospital-demo-jwt-secret-key-change-me-2026-hospital
     ports:
       - "8081:8081"
     restart: unless-stopped

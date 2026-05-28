@@ -10,16 +10,10 @@ import app.auth.login.dto.LoginResult;
 import app.auth.login.mapper.LoginMapper;
 import app.auth.login.validator.LoginValidator;
 import app.auth.register.repository.RegisterAccountRepository;
-import app.auth.session.service.SessionService;
-import app.security.JwtTokenProvider;
 import lombok.AllArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -27,12 +21,10 @@ public class LoginServiceImpl implements LoginService {
 
     private static final String INITIAL_PASSWORD = "1111";
 
-    private final JwtTokenProvider jwtTokenProvider;
     private final RegisterAccountRepository registerAccountRepository;
     private final AuthUserProfileRepository authUserProfileRepository;
     private final LoginMapper loginMapper;
     private final LoginValidator loginValidator;
-    private final SessionService sessionService;
 
     @Override
     public LoginResult login(LoginRequest request) {
@@ -46,44 +38,8 @@ public class LoginServiceImpl implements LoginService {
         validateAccountStatus(account, profileInfo);
 
         boolean passwordChangeRequired = PasswordHashUtil.matches(INITIAL_PASSWORD, account.getPasswordHash());
-        return issueLoginResult(account, profileInfo, passwordChangeRequired);
-    }
-
-    @Override
-    public LoginResult refresh(String refreshToken) {
-        if (refreshToken == null || refreshToken.trim().isEmpty()) {
-            throw new BadCredentialsException("AUTH_REFRESH_TOKEN_REQUIRED");
-        }
-
-        if (!jwtTokenProvider.isValid(refreshToken)) {
-            throw new BadCredentialsException("AUTH_REFRESH_TOKEN_INVALID");
-        }
-
-        String token = refreshToken.trim();
-        var claims = jwtTokenProvider.parseClaims(token);
-
-        String username = claims.getSubject();
-        String sid = claimString(claims, "sid");
-        String refreshJti = claimString(claims, "jti");
-        String tokenType = claimString(claims, "type");
-
-        if (!"refresh".equalsIgnoreCase(tokenType)
-                || isBlank(username)
-                || isBlank(sid)
-                || isBlank(refreshJti)) {
-            throw new BadCredentialsException("AUTH_REFRESH_TOKEN_INVALID");
-        }
-
-        if (!sessionService.isRefreshTokenAlive(username, sid, refreshJti)) {
-            throw new BadCredentialsException("AUTH_REFRESH_TOKEN_INVALID");
-        }
-
-        AuthAccount account = registerAccountRepository.findByUsernameIgnoreCase(username).orElse(null);
-        AuthUserProfileInfo profileInfo = readProfileInfo(account);
-        validateAccountStatus(account, profileInfo);
-
-        boolean passwordChangeRequired = PasswordHashUtil.matches(INITIAL_PASSWORD, account.getPasswordHash());
-        return rotateLoginResult(account, profileInfo, sid, passwordChangeRequired);
+        LoginResponse response = loginMapper.toResponse(account, profileInfo, passwordChangeRequired);
+        return new LoginResult(response);
     }
 
     private void validateLoginCredentials(LoginRequest request, AuthAccount account) {
@@ -112,84 +68,12 @@ public class LoginServiceImpl implements LoginService {
         }
     }
 
-    private LoginResult issueLoginResult(AuthAccount account,
-                                         AuthUserProfileInfo profileInfo,
-                                         boolean passwordChangeRequired) {
-        String sid = UUID.randomUUID().toString();
-        return createLoginResult(account, profileInfo, sid, passwordChangeRequired, false);
-    }
-
-    private LoginResult rotateLoginResult(AuthAccount account,
-                                          AuthUserProfileInfo profileInfo,
-                                          String sid,
-                                          boolean passwordChangeRequired) {
-        return createLoginResult(account, profileInfo, sid, passwordChangeRequired, true);
-    }
-
-    private LoginResult createLoginResult(AuthAccount account,
-                                          AuthUserProfileInfo profileInfo,
-                                          String sid,
-                                          boolean passwordChangeRequired,
-                                          boolean rotateExistingSession) {
-        String accessJti = UUID.randomUUID().toString();
-        String refreshJti = UUID.randomUUID().toString();
-
-        Map<String, Object> accessClaims = createAccessClaims(account, profileInfo, sid, accessJti);
-        Map<String, Object> refreshClaims = createRefreshClaims(sid, refreshJti);
-
-        String accessToken = jwtTokenProvider.createToken(account.getUsername(), accessClaims);
-        String refreshToken = jwtTokenProvider.createRefreshToken(account.getUsername(), refreshClaims);
-
-        if (rotateExistingSession) {
-            sessionService.rotateSessionTokens(account.getUsername(), sid, accessJti, refreshJti);
-        } else {
-            sessionService.startSession(account.getUsername(), sid, accessJti, refreshJti);
-        }
-
-        LoginResponse response = loginMapper.toResponse(
-                account,
-                profileInfo,
-                accessToken,
-                jwtTokenProvider.getExpirationSeconds(),
-                passwordChangeRequired
-        );
-
-        return new LoginResult(response, refreshToken);
-    }
-
     private AuthUserProfileInfo readProfileInfo(AuthAccount account) {
         if (account == null) {
             return new AuthUserProfileInfo(null, null, null, null);
         }
 
         return authUserProfileRepository.readProfileInfo(account.getId());
-    }
-
-    private Map<String, Object> createAccessClaims(AuthAccount account,
-                                                   AuthUserProfileInfo profileInfo,
-                                                   String sid,
-                                                   String accessJti) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("role", account.getRole());
-        claims.put("userId", account.getId());
-        claims.put("fullName", resolveFullName(profileInfo, account));
-        claims.put("sid", sid);
-        claims.put("jti", accessJti);
-        claims.put("type", "access");
-        return claims;
-    }
-
-    private Map<String, Object> createRefreshClaims(String sid, String refreshJti) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("sid", sid);
-        claims.put("jti", refreshJti);
-        claims.put("type", "refresh");
-        return claims;
-    }
-
-    private String claimString(Map<String, Object> claims, String key) {
-        Object value = claims.get(key);
-        return value == null ? null : String.valueOf(value);
     }
 
     private String resolveStatus(AuthUserProfileInfo profileInfo, AuthAccount account) {
@@ -202,18 +86,6 @@ public class LoginServiceImpl implements LoginService {
         }
 
         return "INACTIVE";
-    }
-
-    private String resolveFullName(AuthUserProfileInfo profileInfo, AuthAccount account) {
-        if (profileInfo != null && !isBlank(profileInfo.getFullName())) {
-            return profileInfo.getFullName();
-        }
-
-        if (account != null && !isBlank(account.getFullName())) {
-            return account.getFullName();
-        }
-
-        return account == null ? null : account.getUsername();
     }
 
     private boolean isBlank(String value) {
