@@ -1,22 +1,50 @@
 package app.auth.permission.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@Schema(description = "역할 하나가 메뉴를 어떻게 사용할 수 있는지 보여주는 정보입니다.")
 public class RoleMenuPermissionResponse {
 
+    @Schema(description = "메뉴 번호입니다.")
     private Integer menuId;
+
+    @Schema(description = "상위 메뉴 번호입니다.")
     private Integer parentMenuId;
+
+    @Schema(description = "메뉴 코드입니다.")
     private String menuCode;
+
+    @Schema(description = "화면에 보이는 메뉴 이름입니다.")
     private String menuName;
+
+    @Schema(description = "메뉴를 눌렀을 때 이동할 주소입니다.")
     private String menuPath;
+
+    @Schema(description = "메뉴 아이콘 이름입니다.")
     private String menuIcon;
+
+    @Schema(description = "메뉴가 보이는 순서입니다.")
     private Integer sortOrder;
+
+    @Schema(description = "메뉴가 현재 사용 중인지 표시합니다. Y이면 사용 중입니다.")
     private String isActive;
+
+    @Schema(description = "이 메뉴를 볼 수 있는지 여부입니다.")
     private boolean canView;
+
+    @Schema(description = "이 메뉴에서 새로 만들 수 있는지 여부입니다.")
     private boolean canCreate;
+
+    @Schema(description = "이 메뉴에서 수정할 수 있는지 여부입니다.")
     private boolean canUpdate;
+
+    @Schema(description = "이 메뉴에서 삭제할 수 있는지 여부입니다.")
     private boolean canDelete;
+
+    @Schema(description = "하위 메뉴 목록입니다.")
     private List<RoleMenuPermissionResponse> children = new ArrayList<>();
 
     public RoleMenuPermissionResponse() {
