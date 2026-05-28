@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class SessionServiceImpl implements SessionService {
@@ -66,10 +68,12 @@ public class SessionServiceImpl implements SessionService {
         );
         if (alive) {
             // 검증에 성공한 요청은 마지막 접근 시각을 갱신해 운영 중 추적하기 쉽게 합니다.
-            sessionRepository.findById(sid).ifPresent(session -> {
+            Optional<AuthSession> sessionOptional = sessionRepository.findById(sid);
+            if (sessionOptional.isPresent()) {
+                AuthSession session = sessionOptional.get();
                 session.setLastAccessAt(now);
                 sessionRepository.save(session);
-            });
+            }
         }
 
         return alive;
@@ -84,13 +88,18 @@ public class SessionServiceImpl implements SessionService {
         }
 
         LocalDateTime now = LocalDateTime.now();
-        sessionRepository.findBySessionIdAndUserIdAndIsRevoked(sid, account.getId(), "N")
-                .ifPresent(session -> {
-                    session.setLastAccessAt(now);
-                    session.setIsRevoked("Y");
-                    session.setRevokedAt(now);
-                    sessionRepository.save(session);
-                });
+        Optional<AuthSession> sessionOptional =
+                sessionRepository.findBySessionIdAndUserIdAndIsRevoked(sid, account.getId(), "N");
+
+        if (sessionOptional.isEmpty()) {
+            return;
+        }
+
+        AuthSession session = sessionOptional.get();
+        session.setLastAccessAt(now);
+        session.setIsRevoked("Y");
+        session.setRevokedAt(now);
+        sessionRepository.save(session);
     }
 
     @Override
@@ -123,11 +132,16 @@ public class SessionServiceImpl implements SessionService {
             return null;
         }
 
-        return authAccountRepository.findByUsernameIgnoreCase(normalizedUsername).orElse(null);
+        Optional<AuthAccount> accountOptional = authAccountRepository.findByUsernameIgnoreCase(normalizedUsername);
+        if (accountOptional.isEmpty()) {
+            return null;
+        }
+
+        return accountOptional.get();
     }
 
     private void revokeActiveSessions(String userId, LocalDateTime now) {
-        var activeSessions = sessionRepository.findByUserIdAndIsRevoked(userId, "N");
+        List<AuthSession> activeSessions = sessionRepository.findByUserIdAndIsRevoked(userId, "N");
         for (AuthSession session : activeSessions) {
             session.setIsRevoked("Y");
             session.setRevokedAt(now);

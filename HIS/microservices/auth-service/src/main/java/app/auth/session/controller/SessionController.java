@@ -40,24 +40,38 @@ public class SessionController {
                                                               Authentication authentication) {
         // 다른 마이크로서비스가 Cookie 헤더를 전달해 호출하는 세션 검증 엔드포인트입니다.
         HttpSession session = request.getSession(false);
-        if (session == null || authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error("AUTH_UNAUTHORIZED"));
+        boolean sessionMissing = session == null;
+        boolean authenticationMissing = authentication == null;
+        boolean notAuthenticated = authenticationMissing || !authentication.isAuthenticated();
+
+        if (sessionMissing || notAuthenticated) {
+            ApiResponse<AuthUserInfo> errorBody = ApiResponse.error("AUTH_UNAUTHORIZED");
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBody);
         }
 
-        if (!sessionService.isSessionAliveAndTouch(authentication.getName(), session.getId())) {
+        String username = authentication.getName();
+        String sessionId = session.getId();
+        boolean sessionAlive = sessionService.isSessionAliveAndTouch(username, sessionId);
+
+        if (!sessionAlive) {
             SecurityContextHolder.clearContext();
             session.invalidate();
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error("AUTH_SESSION_EXPIRED"));
+            ApiResponse<AuthUserInfo> errorBody = ApiResponse.error("AUTH_SESSION_EXPIRED");
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBody);
         }
 
-        AuthUserInfo userInfo = meService.getCurrentUserInfo(authentication.getName());
+        AuthUserInfo userInfo = meService.getCurrentUserInfo(username);
         if (userInfo == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error("AUTH_UNAUTHORIZED"));
+            ApiResponse<AuthUserInfo> errorBody = ApiResponse.error("AUTH_UNAUTHORIZED");
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBody);
         }
-        return ResponseEntity.ok(ApiResponse.ok(userInfo));
+
+        ApiResponse<AuthUserInfo> responseBody = ApiResponse.ok(userInfo);
+
+        return ResponseEntity.ok(responseBody);
     }
 
     @PostMapping("/logout")
@@ -70,12 +84,19 @@ public class SessionController {
         // 로그아웃 시 브라우저 세션과 DB 세션 상태를 같이 정리합니다.
         HttpSession session = request.getSession(false);
         if (session != null) {
-            if (authentication != null && authentication.isAuthenticated()) {
-                sessionService.invalidateSession(authentication.getName(), session.getId());
+            boolean canInvalidateDbSession = authentication != null && authentication.isAuthenticated();
+
+            if (canInvalidateDbSession) {
+                String username = authentication.getName();
+                String sessionId = session.getId();
+                sessionService.invalidateSession(username, sessionId);
             }
             session.invalidate();
         }
         SecurityContextHolder.clearContext();
-        return ResponseEntity.ok(ApiResponse.ok());
+
+        ApiResponse<Void> responseBody = ApiResponse.ok();
+
+        return ResponseEntity.ok(responseBody);
     }
 }

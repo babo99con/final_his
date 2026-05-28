@@ -29,12 +29,19 @@ public class MenuController {
             description = "로그인한 사용자의 권한을 기준으로 화면에 보여줄 메뉴 목록을 가져옵니다."
     )
     public ResponseEntity<ApiResponse<List<MenuResponse>>> getMenus(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error("AUTH_UNAUTHORIZED"));
+        boolean authenticationMissing = authentication == null;
+        boolean notAuthenticated = authenticationMissing || !authentication.isAuthenticated();
+
+        if (notAuthenticated) {
+            ApiResponse<List<MenuResponse>> errorBody = ApiResponse.error("AUTH_UNAUTHORIZED");
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBody);
         }
 
-        List<MenuResponse> menus = menuService.getMenus(authentication.getName());
-        return ResponseEntity.ok(ApiResponse.ok(menus));
+        String username = authentication.getName();
+        List<MenuResponse> menus = menuService.getMenus(username);
+        ApiResponse<List<MenuResponse>> responseBody = ApiResponse.ok(menus);
+
+        return ResponseEntity.ok(responseBody);
     }
 }

@@ -40,27 +40,40 @@ public class MeController {
     )
     public ResponseEntity<ApiResponse<AuthUserInfo>> me(HttpServletRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error("AUTH_UNAUTHORIZED"));
+        boolean authenticationMissing = authentication == null;
+        boolean notAuthenticated = authenticationMissing || !authentication.isAuthenticated();
+
+        if (notAuthenticated) {
+            ApiResponse<AuthUserInfo> errorBody = ApiResponse.error("AUTH_UNAUTHORIZED");
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBody);
         }
 
         HttpSession session = request.getSession(false);
-        if (session == null || !sessionService.isSessionAliveAndTouch(authentication.getName(), session.getId())) {
+        boolean sessionMissing = session == null;
+        String username = authentication.getName();
+        boolean sessionAlive = !sessionMissing && sessionService.isSessionAliveAndTouch(username, session.getId());
+
+        if (!sessionAlive) {
             SecurityContextHolder.clearContext();
             if (session != null) {
                 session.invalidate();
             }
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error("AUTH_SESSION_EXPIRED"));
+            ApiResponse<AuthUserInfo> errorBody = ApiResponse.error("AUTH_SESSION_EXPIRED");
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBody);
         }
 
-        AuthUserInfo userInfo = meService.getCurrentUserInfo(authentication.getName());
+        AuthUserInfo userInfo = meService.getCurrentUserInfo(username);
         if (userInfo == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error("AUTH_UNAUTHORIZED"));
+            ApiResponse<AuthUserInfo> errorBody = ApiResponse.error("AUTH_UNAUTHORIZED");
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBody);
         }
-        return ResponseEntity.ok(ApiResponse.ok(userInfo));
+
+        ApiResponse<AuthUserInfo> responseBody = ApiResponse.ok(userInfo);
+
+        return ResponseEntity.ok(responseBody);
     }
 
     @PatchMapping("/me/password")
@@ -70,12 +83,20 @@ public class MeController {
     )
     public ResponseEntity<ApiResponse<Void>> changeMyPassword(@RequestBody ChangePasswordRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error("AUTH_UNAUTHORIZED"));
+        boolean authenticationMissing = authentication == null;
+        boolean notAuthenticated = authenticationMissing || !authentication.isAuthenticated();
+
+        if (notAuthenticated) {
+            ApiResponse<Void> errorBody = ApiResponse.error("AUTH_UNAUTHORIZED");
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBody);
         }
 
-        meService.changeMyPassword(authentication.getName(), request);
-        return ResponseEntity.ok(ApiResponse.ok("AUTH_PASSWORD_CHANGED"));
+        String username = authentication.getName();
+        meService.changeMyPassword(username, request);
+
+        ApiResponse<Void> responseBody = ApiResponse.ok("AUTH_PASSWORD_CHANGED");
+
+        return ResponseEntity.ok(responseBody);
     }
 }
