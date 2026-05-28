@@ -38,7 +38,14 @@ public class SessionValidationFilter implements Filter {
 
         // 브라우저가 보낸 JSESSIONID 쿠키를 그대로 auth-service에 전달해서 세션 유효성을 확인합니다.
         String cookie = httpRequest.getHeader("Cookie");
-        if (!StringUtils.hasText(cookie) || !isSessionValid(cookie)) {
+        boolean cookieMissing = !StringUtils.hasText(cookie);
+        if (cookieMissing) {
+            httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "AUTH_SESSION_REQUIRED");
+            return;
+        }
+
+        boolean sessionValid = isSessionValid(cookie);
+        if (!sessionValid) {
             httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "AUTH_SESSION_REQUIRED");
             return;
         }
@@ -47,7 +54,8 @@ public class SessionValidationFilter implements Filter {
     }
 
     private boolean isSessionValid(String cookie) throws IOException {
-        HttpURLConnection connection = (HttpURLConnection) new URL(sessionValidationUrl).openConnection();
+        URL validateUrl = new URL(sessionValidationUrl);
+        HttpURLConnection connection = (HttpURLConnection) validateUrl.openConnection();
         connection.setRequestMethod("GET");
         connection.setRequestProperty("Cookie", cookie);
         connection.setRequestProperty("Accept", "application/json");
@@ -55,7 +63,9 @@ public class SessionValidationFilter implements Filter {
         connection.setReadTimeout(3000);
         int status = connection.getResponseCode();
         connection.disconnect();
-        return status >= 200 && status < 300;
+        boolean successStatus = status >= 200 && status < 300;
+
+        return successStatus;
     }
 
     private boolean shouldSkip(HttpServletRequest request) {
@@ -64,10 +74,11 @@ public class SessionValidationFilter implements Filter {
         }
         // 상태 확인과 Swagger 문서는 로그인 전에도 접근 가능해야 하므로 세션 검증을 건너뜁니다.
         String path = request.getRequestURI();
-        return path.equals("/")
-                || path.startsWith("/actuator")
-                || path.startsWith("/swagger")
-                || path.startsWith("/v3/api-docs")
-                || path.startsWith("/api-docs");
+        boolean rootPath = path.equals("/");
+        boolean actuatorPath = path.startsWith("/actuator");
+        boolean swaggerPath = path.startsWith("/swagger");
+        boolean swaggerDocsPath = path.startsWith("/v3/api-docs") || path.startsWith("/api-docs");
+
+        return rootPath || actuatorPath || swaggerPath || swaggerDocsPath;
     }
 }
