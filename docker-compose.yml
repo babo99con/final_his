@@ -256,6 +256,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: 1111
       KAFKA_BROKERS: kafka
       KAFKA_BROKER_PORT: 9092
+      APP_SUPPORT_FEEDBACK_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       RECEPTION_API_BASE_URL: http://reception-service:8283
       CLINICAL_SUPPORT_API_BASE_URL: http://clinic-support-service:8189
       BILLING_API_BASE_URL: http://billing-service:8081
