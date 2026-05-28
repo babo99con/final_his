@@ -60,7 +60,7 @@ public class SecurityConfig {
                         "/api-docs/**",
                         "/v3/api-docs/**"
                 ).permitAll()
-                .antMatchers("/api/auth/email/**", "/api/auth/me", "/api/auth/logout").authenticated()
+                .antMatchers("/api/auth/me", "/api/auth/logout").authenticated()
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/menus").authenticated()
                 .antMatchers("/api/admin/permissions/**").hasRole("ADMIN")

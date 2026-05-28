@@ -8,11 +8,7 @@ import app.auth.register.mapper.RegisterMapper;
 import app.auth.register.repository.RegisterAccountRepository;
 import app.auth.register.repository.RegisterEmployeeRepository;
 import app.auth.register.validator.RegisterValidator;
-import app.auth.verification.repository.VerificationRepository;
-import app.auth.verification.validator.VerificationValidator;
 import lombok.AllArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -24,14 +20,10 @@ import java.util.Locale;
 @AllArgsConstructor
 public class RegisterServiceImpl implements RegisterService {
 
-    private static final Logger log = LoggerFactory.getLogger(RegisterServiceImpl.class);
-
     private final RegisterAccountRepository registerAccountRepository;
     private final RegisterEmployeeRepository registerEmployeeRepository;
     private final RegisterMapper registerMapper;
     private final RegisterValidator registerValidator;
-    private final VerificationRepository verificationRepository;
-    private final VerificationValidator verificationValidator;
 
     @Override
     @Transactional
@@ -47,10 +39,8 @@ public class RegisterServiceImpl implements RegisterService {
         String phone = trim(request.getPhone());
 
         validateBasicRegisterFields(fullName, email, phone);
-        email = verificationValidator.normalizeEmail(email);
-        phone = verificationValidator.normalizePhone(phone);
-        validateRegisterEmailVerification(email, request.getEmailVerificationToken());
-        validateRegisterPhoneVerification(phone, request.getPhoneVerificationToken());
+        email = normalizeEmail(email);
+        phone = normalizePhone(phone);
 
         String roleCode = normalizeRoleCode(request.getRole());
         registerValidator.validateRole(roleCode);
@@ -65,8 +55,6 @@ public class RegisterServiceImpl implements RegisterService {
         account.setUsername(staffId);
         registerAccountRepository.save(account);
         registerEmployeeRepository.insertEmployee(staffId, departmentId, fullName, phone, email, "PENDING_APPROVAL");
-
-        consumeVerificationResource(request.getEmailVerificationToken(), request.getPhoneVerificationToken());
     }
 
     @Override
@@ -122,57 +110,28 @@ public class RegisterServiceImpl implements RegisterService {
         }
     }
 
-    private void validateRegisterEmailVerification(String email, String token) {
-        if (!isRegisterEmailTokenValid(email, token)) {
-            throw new IllegalArgumentException("AUTH_EMAIL_NOT_VERIFIED");
-        }
-    }
-
-    private void validateRegisterPhoneVerification(String phone, String token) {
-        if (!isRegisterPhoneTokenValid(phone, token)) {
-            throw new IllegalArgumentException("AUTH_PHONE_NOT_VERIFIED");
-        }
-    }
-
-    private void consumeVerificationResource(String emailVerificationToken, String phoneVerificationToken) {
-        verificationRepository.consumeVerifiedToken("email", trim(emailVerificationToken));
-        verificationRepository.consumeVerifiedToken("phone", trim(phoneVerificationToken));
-    }
-
-    private boolean isRegisterEmailTokenValid(String email, String token) {
-        String normalizedToken = trim(token);
-        if (!StringUtils.hasText(normalizedToken)) {
-            log.info("[REGISTER_DEBUG] emailVerificationToken is empty");
-            return false;
-        }
-
-        String verifiedEmail = verificationRepository.readVerifiedToken("email", normalizedToken);
-        log.info("[REGISTER_DEBUG] requestEmail={}", email);
-        log.info("[REGISTER_DEBUG] requestToken={}", normalizedToken);
-        log.info("[REGISTER_DEBUG] verifiedEmail={}", verifiedEmail);
-        return email.equals(verifiedEmail);
-    }
-
-    private boolean isRegisterPhoneTokenValid(String phone, String token) {
-        String normalizedToken = trim(token);
-        if (!StringUtils.hasText(normalizedToken)) {
-            log.info("[REGISTER_DEBUG] phoneVerificationToken is empty");
-            return false;
-        }
-
-        String verifiedPhone = verificationRepository.readVerifiedToken("phone", normalizedToken);
-        log.info("[REGISTER_DEBUG] requestPhone={}", phone);
-        log.info("[REGISTER_DEBUG] requestPhoneToken={}", normalizedToken);
-        log.info("[REGISTER_DEBUG] verifiedPhone={}", verifiedPhone);
-        return phone.equals(verifiedPhone);
-    }
-
     private String normalizeUsername(String username) {
         if (username == null) {
             return "";
         }
 
         return username.trim().toLowerCase();
+    }
+
+    private String normalizeEmail(String rawEmail) {
+        String email = trim(rawEmail).toLowerCase(Locale.ROOT);
+        if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+            throw new IllegalArgumentException("AUTH_EMAIL_INVALID");
+        }
+        return email;
+    }
+
+    private String normalizePhone(String rawPhone) {
+        String phone = trim(rawPhone).replaceAll("[^0-9]", "");
+        if (phone.length() < 9 || phone.length() > 11) {
+            throw new IllegalArgumentException("AUTH_PHONE_INVALID");
+        }
+        return phone;
     }
 
     private String normalizeRoleCode(String roleCode) {
