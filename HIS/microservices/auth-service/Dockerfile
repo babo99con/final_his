@@ -1,14 +1,16 @@
-FROM gradle:8.11-jdk21 AS builder
+FROM gradle:8.11-jdk17 AS builder
 WORKDIR /app
 
 # Copy only the files needed to build to keep the image small
-COPY build.gradle settings.gradle gradlew gradlew.bat ./
-COPY gradle gradle
-COPY src src
+COPY microservices/auth-service/build.gradle microservices/auth-service/settings.gradle microservices/auth-service/gradlew microservices/auth-service/gradlew.bat ./
+COPY microservices/auth-service/gradle gradle
+COPY microservices/auth-service/src src
+COPY util util
+RUN sed -i "s|../../util|util|" settings.gradle
 
 RUN gradle bootWar --no-daemon
 
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:17-jre
 WORKDIR /app
 
 RUN apt-get update \

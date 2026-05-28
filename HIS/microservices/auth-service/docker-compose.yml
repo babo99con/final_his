@@ -61,8 +61,8 @@ services:
 
   auth-server:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: microservices/auth-service/Dockerfile
     depends_on:
       oracle-bootstrap:
         condition: service_completed_successfully
@@ -92,7 +92,7 @@ services:
       MINIO_BUCKET_STAFF: staff-profile
       MINIO_BUCKET_PATIENT: hospital-files
       APP_AUTH_SESSION_IDLE_SECONDS: ${APP_AUTH_SESSION_IDLE_SECONDS:-7200}
-      APP_AUTH_SESSION_ABSOLUTE_SECONDS: ${APP_AUTH_SESSION_ABSOLUTE_SECONDS:-43200}
+      APP_AUTH_SESSION_ABSOLUTE_SECONDS: ${APP_AUTH_SESSION_ABSOLUTE_SECONDS:-3600}
       JAVA_TOOL_OPTIONS: -Duser.timezone=UTC -Doracle.jdbc.timezoneAsRegion=false
     restart: unless-stopped
 

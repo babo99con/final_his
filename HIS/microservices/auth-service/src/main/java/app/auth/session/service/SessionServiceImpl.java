@@ -17,7 +17,7 @@ public class SessionServiceImpl implements SessionService {
     private final AuthAccountRepository authAccountRepository;
     private final SessionRepository sessionRepository;
 
-    @Value("${app.auth.session.absolute-seconds:43200}")
+    @Value("${app.auth.session.absolute-seconds:3600}")
     private long absoluteSeconds;
 
     public SessionServiceImpl(AuthAccountRepository authAccountRepository,
