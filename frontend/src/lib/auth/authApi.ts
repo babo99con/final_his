@@ -14,17 +14,6 @@ type RegisterRequest = {
   fullName: string;
   email?: string;
   phone?: string;
-  emailVerificationToken?: string;
-  phoneVerificationToken?: string;
-};
-
-type EmailSendRequest = {
-  email: string;
-};
-
-type EmailVerifyRequest = {
-  email: string;
-  code: string;
 };
 
 type PasswordResetPrepareRequest = {
@@ -67,8 +56,6 @@ applyAuthInterceptors(api, {
   skipRedirectPaths: [
     "/api/auth/login",
     "/api/auth/register",
-    "/api/auth/email",
-    "/api/auth/phone",
     "/api/auth/password/reset/prepare",
     "/api/auth/password/reset/confirm",
   ],
@@ -177,21 +164,6 @@ export const logoutApi = async (): Promise<void> => {
   await api.post("/api/auth/logout");
 };
 
-export const sendVerificationEmailApi = async (payload: EmailSendRequest): Promise<void> => {
-  const res = await api.post<ApiResponse<string>>("/api/auth/email/send", payload);
-  if (!res.data.success) {
-    throw new Error(res.data.message || "?대찓??諛쒖넚???ㅽ뙣?덉뒿?덈떎.");
-  }
-};
-
-export const verifyEmailCodeApi = async (payload: EmailVerifyRequest): Promise<boolean> => {
-  const res = await api.post<ApiResponse<boolean>>("/api/auth/email/verify", payload);
-  if (!res.data.success || !res.data.result) {
-    throw new Error(res.data.message || "?대찓???몄쬆 ?뺤씤???ㅽ뙣?덉뒿?덈떎.");
-  }
-  return true;
-};
-
 export const preparePasswordReset = async (
   userIdentifier: string,
   name: string
@@ -260,36 +232,4 @@ export const checkUsernameAvailabilityApi = async (username: string): Promise<bo
     throw new Error(res.data.message || "?꾩씠??以묐났 ?뺤씤???ㅽ뙣?덉뒿?덈떎.");
   }
   return res.data.result;
-};
-
-export const sendRegisterEmailCodeApi = async (email: string): Promise<string> => {
-  const res = await api.post<ApiResponse<void>>("/api/auth/register/email/send", { value: email });
-  if (!res.data.success) {
-    throw new Error(res.data.message || "?대찓???몄쬆肄붾뱶 諛쒖넚???ㅽ뙣?덉뒿?덈떎.");
-  }
-  return res.data.message || "?몄쬆肄붾뱶瑜?諛쒖넚?덉뒿?덈떎.";
-};
-
-export const verifyRegisterEmailCodeApi = async (email: string, code: string): Promise<string> => {
-  const res = await api.post<ApiResponse<{ verificationToken: string }>>("/api/auth/register/email/verify", { value: email, code });
-  if (!res.data.success || !res.data.result?.verificationToken) {
-    throw new Error(res.data.message || "?대찓???몄쬆 ?뺤씤???ㅽ뙣?덉뒿?덈떎.");
-  }
-  return res.data.result.verificationToken;
-};
-
-export const sendRegisterPhoneCodeApi = async (phone: string): Promise<string> => {
-  const res = await api.post<ApiResponse<void>>("/api/auth/register/phone/send", { value: phone });
-  if (!res.data.success) {
-    throw new Error(res.data.message || "臾몄옄 ?몄쬆肄붾뱶 諛쒖넚???ㅽ뙣?덉뒿?덈떎.");
-  }
-  return res.data.message || "?몄쬆肄붾뱶瑜?諛쒖넚?덉뒿?덈떎.";
-};
-
-export const verifyRegisterPhoneCodeApi = async (phone: string, code: string): Promise<string> => {
-  const res = await api.post<ApiResponse<{ verificationToken: string }>>("/api/auth/register/phone/verify", { value: phone, code });
-  if (!res.data.success || !res.data.result?.verificationToken) {
-    throw new Error(res.data.message || "臾몄옄 ?몄쬆 ?뺤씤???ㅽ뙣?덉뒿?덈떎.");
-  }
-  return res.data.result.verificationToken;
 };

@@ -13,14 +13,12 @@
 | /api/auth/menu | GET | Returns the hierarchical menu tree granted to the caller. |
 | /api/auth/permission/users | GET/POST | Query or update user menu permissions. |
 | /api/auth/permission/roles | GET/POST | Query or update role menu permissions. |
-| /api/auth/register | POST | Submit a registration request (email verification + approval). |
+| /api/auth/register | POST | Submit a registration request for approval. |
 | /api/auth/session/validate | GET | Validates the current server-side session. |
-| /api/auth/verification/email/send | POST | Send a registration email code. |
-| /api/auth/verification/email/confirm | POST | Confirm the email code and issue a verification token. |
 
 `MenuAccessFilter`媛 `/api/**` 寃쎈줈瑜?紐⑤몢 媛먯떥硫? 硫붾돱 湲곕컲 ?덉슜 紐⑸줉??寃利앺빀?덈떎.
 
-## Local Verification Notes
+## Local Notes
 
 1. ?쒕퉬?ㅻ? (`./gradlew bootRun` ?먮뒗 `docker compose up`) ?ㅽ뻾?섍퀬 濡쒓렇????`/api/auth/menu`媛 湲곕???硫붾돱 ?몃━瑜?諛섑솚?섎뒗吏 ?뺤씤?섏꽭??
 

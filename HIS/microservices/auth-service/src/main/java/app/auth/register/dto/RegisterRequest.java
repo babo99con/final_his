@@ -13,6 +13,4 @@ public class RegisterRequest {
     private String phone;
     private String role;
     private String department;
-    private String emailVerificationToken;
-    private String phoneVerificationToken;
 }
