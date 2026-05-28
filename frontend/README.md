@@ -2,7 +2,7 @@
 
 병원 업무 화면을 제공하는 Next.js 프론트엔드 프로젝트입니다.
 
-현재 `feature/login` 브랜치에서는 로그인, 인증 상태 유지, 메뉴 조회, 개발용 우회 진입(dev bypass) 흐름을 중심으로 작업합니다.
+현재 프론트엔드는 로그인, 인증 상태 유지, 메뉴 조회 흐름을 중심으로 동작합니다.
 
 ## 실행 방법
 
@@ -30,7 +30,6 @@ NEXT_PUBLIC_AUTH_API_BASE_URL=http://192.168.1.64:8081
 NEXT_PUBLIC_MENU_API_BASE_URL=http://192.168.1.64:8081
 NEXT_PUBLIC_BILLING_API_BASE_URL=http://192.168.1.68:8081
 NEXT_PUBLIC_STAFF_API_BASE_URL=http://192.168.1.58:8022
-NEXT_PUBLIC_ENABLE_DEV_BYPASS=true
 
 NEXT_PUBLIC_PATIENTS_API_BASE_URL=http://192.168.1.60:8181
 NEXT_PUBLIC_RECEPTION_API_BASE_URL=http://192.168.1.55:8283
@@ -53,10 +52,6 @@ NEXT_PUBLIC_NURSING_API_BASE_URL=http://192.168.1.66:8181
 - `NEXT_PUBLIC_STAFF_API_BASE_URL`
   - 직원, 부서, 직책, 의료진 정보 관련 API를 호출할 때 사용하는 서버 주소입니다.
 
-- `NEXT_PUBLIC_ENABLE_DEV_BYPASS`
-  - `true`이면 로그인 화면에서 개발용 우회 진입 버튼을 사용할 수 있습니다.
-  - `false`이면 일반 로그인만 사용할 수 있습니다.
-
 ## 로그인 검증 방법
 
 ### 일반 로그인
@@ -67,19 +62,6 @@ NEXT_PUBLIC_NURSING_API_BASE_URL=http://192.168.1.66:8181
 4. 로그인 직후 `/api/menus`를 호출하여 현재 사용자 기준 메뉴를 조회합니다.
 5. 이후 홈(`/`) 또는 비밀번호 변경 페이지로 이동합니다.
 
-### 개발용 우회 진입
-
-`NEXT_PUBLIC_ENABLE_DEV_BYPASS=true`일 때 로그인 화면에서 개발용 우회 진입 버튼이 노출됩니다.
-
-이 기능은 다음 상황에서 사용합니다.
-
-- 인증 서버가 불안정할 때 화면 개발 진행
-- 로그인 절차와 별개로 프론트 화면 확인
-- 보호 라우트 진입 확인
-
-단, dev bypass를 사용해도 메뉴는 실제 백엔드 `/api/menus`를 호출합니다.
-즉 화면 진입만 우회할 뿐, 메뉴 데이터는 인증/메뉴 서버가 정상이어야 표시됩니다.
-
 ## 인증 및 메뉴 동작 요약
 
 로그인 이후 흐름은 아래와 같습니다.
@@ -89,7 +71,7 @@ NEXT_PUBLIC_NURSING_API_BASE_URL=http://192.168.1.66:8181
 3. `/api/menus` 호출
 4. 현재 사용자에게 허용된 메뉴만 조회
 5. 사이드바 메뉴 출력
-6. 보호 라우트 접근 시 proxy와 메뉴 권한 기준으로 검사
+6. API 요청은 브라우저의 `JSESSIONID` 세션 쿠키를 함께 보내서 인증 상태를 유지
 
 ## 주의사항
 
@@ -108,7 +90,7 @@ NEXT_PUBLIC_NURSING_API_BASE_URL=http://192.168.1.66:8181
 
 - `NEXT_PUBLIC_MENU_API_BASE_URL` 값이 맞는지 확인합니다.
 - `/api/menus` 호출 결과가 `200`인지 확인합니다.
-- dev bypass 상태라도 메뉴는 실제 백엔드에 의존합니다.
+- 메뉴 조회는 실제 백엔드 세션 인증에 의존합니다.
 
 ### 권한 없는 화면이 열릴 때
 

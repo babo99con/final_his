@@ -15,12 +15,6 @@ import {
 } from "@mui/material";
 import PasswordResetDialog from "@/components/auth/PasswordResetDialog";
 import { dispatchLogin } from "@/lib/auth/loginDispatch";
-import {
-  clearSession,
-  saveSessionUserOnly,
-  setDevBypassCookie,
-} from "@/lib/auth/session";
-import { DEV_BYPASS_ENABLED } from "@/lib/common/env";
 
 const SAVED_USERNAME_KEY = "login.savedUsername";
 const REMEMBER_LOGIN_KEY = "login.rememberLogin";
@@ -86,23 +80,6 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDevBypassLogin = () => {
-    clearSession();
-    setDevBypassCookie(true);
-    saveSessionUserOnly(
-      {
-        userId: "0",
-        username: "dev.admin",
-        fullName: "개발용 관리자",
-        role: "ADMIN",
-        departmentId: null,
-        departmentName: null,
-      },
-      { passwordChangeRequired: false }
-    );
-    window.location.replace("/");
   };
 
   return (
@@ -221,16 +198,6 @@ export default function LoginPage() {
             >
               {loading ? "로그인 중..." : "로그인"}
             </Button>
-
-            {DEV_BYPASS_ENABLED ? (
-              <Button
-                variant="outlined"
-                onClick={handleDevBypassLogin}
-                sx={{ py: 1, fontWeight: 700 }}
-              >
-                개발용 인증 없이 화면 보기
-              </Button>
-            ) : null}
 
             <Button
               variant="text"

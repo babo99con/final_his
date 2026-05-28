@@ -30,6 +30,3 @@ export const NOTIFICATION_API_BASE_URL = requireEnv(
   "NEXT_PUBLIC_NOTIFICATION_API_BASE_URL",
   process.env.NEXT_PUBLIC_NOTIFICATION_API_BASE_URL
 );
-
-export const DEV_BYPASS_ENABLED =
-  (process.env.NEXT_PUBLIC_ENABLE_DEV_BYPASS ?? "false").trim().toLowerCase() === "true";
