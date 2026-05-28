@@ -11,6 +11,7 @@ import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.util.Collection;
 import java.util.Collections;
 
 @Service
@@ -28,11 +29,19 @@ public class SessionAuthenticationService {
         }
 
         // 로그인 성공 후 Spring Security 인증 정보와 서버 세션을 함께 만들어 이후 요청을 쿠키 기반으로 처리합니다.
-        String role = StringUtils.hasText(user.getRole()) ? user.getRole().trim() : "USER";
+        String role = "USER";
+        if (StringUtils.hasText(user.getRole())) {
+            role = user.getRole().trim();
+        }
+
+        String springSecurityRole = "ROLE_" + role;
+        SimpleGrantedAuthority authority = new SimpleGrantedAuthority(springSecurityRole);
+        Collection<SimpleGrantedAuthority> authorities = Collections.singletonList(authority);
+
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                 user.getUsername(),
                 null,
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role))
+                authorities
         );
 
         SecurityContext context = SecurityContextHolder.createEmptyContext();

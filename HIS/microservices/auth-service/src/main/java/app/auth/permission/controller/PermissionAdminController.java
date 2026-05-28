@@ -40,7 +40,9 @@ public class PermissionAdminController {
     )
     public ResponseEntity<ApiResponse<List<PermissionRoleResponse>>> getRoles() {
         List<PermissionRoleResponse> roles = permissionAdminService.getRoles();
-        return ResponseEntity.ok(ApiResponse.ok(roles));
+        ApiResponse<List<PermissionRoleResponse>> responseBody = ApiResponse.ok(roles);
+
+        return ResponseEntity.ok(responseBody);
     }
 
     @GetMapping("/roles/{roleCode}/menus")
@@ -53,10 +55,13 @@ public class PermissionAdminController {
             @PathVariable String roleCode) {
         try {
             List<RoleMenuPermissionResponse> menus = permissionAdminService.getRoleMenuPermissions(roleCode);
-            return ResponseEntity.ok(ApiResponse.ok(menus));
+            ApiResponse<List<RoleMenuPermissionResponse>> responseBody = ApiResponse.ok(menus);
+
+            return ResponseEntity.ok(responseBody);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error(e.getMessage()));
+            ApiResponse<List<RoleMenuPermissionResponse>> errorBody = ApiResponse.error(e.getMessage());
+
+            return ResponseEntity.badRequest().body(errorBody);
         }
     }
 
@@ -71,9 +76,13 @@ public class PermissionAdminController {
             @RequestBody RoleMenuPermissionUpdateRequest request) {
         try {
             permissionAdminService.updateRoleMenuPermissions(roleCode, request);
-            return ResponseEntity.ok(ApiResponse.ok("Role menu permissions saved."));
+            ApiResponse<Void> responseBody = ApiResponse.ok("Role menu permissions saved.");
+
+            return ResponseEntity.ok(responseBody);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+            ApiResponse<Void> errorBody = ApiResponse.error(e.getMessage());
+
+            return ResponseEntity.badRequest().body(errorBody);
         }
     }
 
@@ -86,7 +95,9 @@ public class PermissionAdminController {
             @Parameter(description = "찾고 싶은 사용자 이름이나 아이디입니다. 비워도 됩니다.")
             @RequestParam(required = false) String keyword) {
         List<PermissionUserResponse> users = permissionAdminService.searchUsers(keyword);
-        return ResponseEntity.ok(ApiResponse.ok(users));
+        ApiResponse<List<PermissionUserResponse>> responseBody = ApiResponse.ok(users);
+
+        return ResponseEntity.ok(responseBody);
     }
 
     @GetMapping("/users/{userId}/menus")
@@ -99,10 +110,13 @@ public class PermissionAdminController {
             @PathVariable String userId) {
         try {
             List<UserMenuPermissionResponse> menus = permissionAdminService.getUserMenuPermissions(userId);
-            return ResponseEntity.ok(ApiResponse.ok(menus));
+            ApiResponse<List<UserMenuPermissionResponse>> responseBody = ApiResponse.ok(menus);
+
+            return ResponseEntity.ok(responseBody);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error(e.getMessage()));
+            ApiResponse<List<UserMenuPermissionResponse>> errorBody = ApiResponse.error(e.getMessage());
+
+            return ResponseEntity.badRequest().body(errorBody);
         }
     }
 
@@ -117,9 +131,13 @@ public class PermissionAdminController {
             @RequestBody UserMenuPermissionUpdateRequest request) {
         try {
             permissionAdminService.updateUserMenuPermissions(userId, request);
-            return ResponseEntity.ok(ApiResponse.ok("User menu override saved."));
+            ApiResponse<Void> responseBody = ApiResponse.ok("User menu override saved.");
+
+            return ResponseEntity.ok(responseBody);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+            ApiResponse<Void> errorBody = ApiResponse.error(e.getMessage());
+
+            return ResponseEntity.badRequest().body(errorBody);
         }
     }
 }

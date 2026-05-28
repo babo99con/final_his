@@ -42,15 +42,20 @@ public class LoginController {
                                                             HttpServletRequest httpRequest) {
         try {
             LoginResult loginResult = loginService.login(request);
-            sessionAuthenticationService.establish(httpRequest, loginResult.getResponse().getUser());
+            LoginResponse loginResponse = loginResult.getResponse();
+            sessionAuthenticationService.establish(httpRequest, loginResponse.getUser());
 
-            return ResponseEntity.ok(ApiResponse.ok(loginResult.getResponse()));
+            ApiResponse<LoginResponse> responseBody = ApiResponse.ok(loginResponse);
+
+            return ResponseEntity.ok(responseBody);
         } catch (BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error("AUTH_INVALID_CREDENTIALS"));
+            ApiResponse<LoginResponse> errorBody = ApiResponse.error("AUTH_INVALID_CREDENTIALS");
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBody);
         } catch (AccessDeniedException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ApiResponse.error(e.getMessage()));
+            ApiResponse<LoginResponse> errorBody = ApiResponse.error(e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody);
         }
     }
 }
