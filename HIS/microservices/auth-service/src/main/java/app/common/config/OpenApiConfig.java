@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.servers.Server;
 import org.springframework.context.annotation.Configuration;
 
+// Swagger에서 인증 방식을 바로 이해할 수 있도록 문서 제목, 설명, 세션 쿠키 인증 방식을 정의합니다.
 @Configuration
 @OpenAPIDefinition(
         info = @Info(

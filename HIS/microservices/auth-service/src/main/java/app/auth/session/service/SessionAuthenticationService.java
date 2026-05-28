@@ -27,6 +27,7 @@ public class SessionAuthenticationService {
             return;
         }
 
+        // 로그인 성공 후 Spring Security 인증 정보와 서버 세션을 함께 만들어 이후 요청을 쿠키 기반으로 처리합니다.
         String role = StringUtils.hasText(user.getRole()) ? user.getRole().trim() : "USER";
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                 user.getUsername(),
@@ -40,6 +41,7 @@ public class SessionAuthenticationService {
 
         HttpSession httpSession = request.getSession(true);
         httpSession.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
+        // DB에도 같은 세션 ID를 기록해 마이크로서비스들이 auth-service를 통해 세션 유효성을 확인할 수 있게 합니다.
         sessionService.startSession(user.getUsername(), httpSession.getId());
     }
 }

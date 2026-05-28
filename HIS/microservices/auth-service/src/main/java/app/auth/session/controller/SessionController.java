@@ -31,6 +31,7 @@ public class SessionController {
     @GetMapping("/session/validate")
     public ResponseEntity<ApiResponse<AuthUserInfo>> validate(HttpServletRequest request,
                                                               Authentication authentication) {
+        // 다른 마이크로서비스가 Cookie 헤더를 전달해 호출하는 세션 검증 엔드포인트입니다.
         HttpSession session = request.getSession(false);
         if (session == null || authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -55,6 +56,7 @@ public class SessionController {
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request,
                                                     Authentication authentication) {
+        // 로그아웃 시 브라우저 세션과 DB 세션 상태를 같이 정리합니다.
         HttpSession session = request.getSession(false);
         if (session != null) {
             if (authentication != null && authentication.isAuthenticated()) {

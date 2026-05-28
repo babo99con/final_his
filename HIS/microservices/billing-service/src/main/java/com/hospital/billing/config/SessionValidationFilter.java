@@ -21,6 +21,7 @@ import java.net.URL;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class SessionValidationFilter implements Filter {
 
+    // 각 마이크로서비스는 직접 로그인 상태를 판단하지 않고 auth-service의 세션 검증 API에 위임합니다.
     @Value("${app.auth.session-validation-url:http://localhost:8586/api/auth/session/validate}")
     private String sessionValidationUrl;
 
@@ -35,6 +36,7 @@ public class SessionValidationFilter implements Filter {
             return;
         }
 
+        // 브라우저가 보낸 JSESSIONID 쿠키를 그대로 auth-service에 전달해서 세션 유효성을 확인합니다.
         String cookie = httpRequest.getHeader("Cookie");
         if (!StringUtils.hasText(cookie) || !isSessionValid(cookie)) {
             httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "AUTH_SESSION_REQUIRED");
@@ -60,6 +62,7 @@ public class SessionValidationFilter implements Filter {
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             return true;
         }
+        // 상태 확인과 Swagger 문서는 로그인 전에도 접근 가능해야 하므로 세션 검증을 건너뜁니다.
         String path = request.getRequestURI();
         return path.equals("/")
                 || path.startsWith("/actuator")
