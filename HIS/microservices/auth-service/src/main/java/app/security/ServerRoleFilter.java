@@ -28,7 +28,7 @@ public class ServerRoleFilter extends OncePerRequestFilter {
         }
 
         String path = request.getRequestURI();
-        boolean isAuthPath = path.startsWith("/api/auth") || path.startsWith("/oauth2/") || path.startsWith("/login/oauth2/");
+        boolean isAuthPath = path.startsWith("/api/auth");
         boolean isInfraPath = path.startsWith("/swagger-ui") || path.startsWith("/v3/api-docs") || path.startsWith("/api-docs") || path.startsWith("/error");
 
         if ("auth".equals(role)) {

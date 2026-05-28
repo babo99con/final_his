@@ -11,13 +11,11 @@ export type SessionUser = {
 export const getEffectiveSessionRole = (user: SessionUser | null | undefined) =>
   user?.authRole ?? user?.role ?? null;
 
-const TOKEN_KEY = "his.accessToken";
 const USER_KEY = "his.user";
 const PASSWORD_CHANGE_REQUIRED_KEY = "his.passwordChangeRequired";
 const FORCE_PASSWORD_COOKIE_KEY = "his_force_password_change";
 const DEV_BYPASS_COOKIE_KEY = "his_dev_bypass";
 const CSRF_COOKIE_KEY = "XSRF-TOKEN";
-const AUTH_COOKIE_KEY = "his_access_token";
 const SESSION_CHANGED_EVENT = "his:session-changed";
 
 const readStored = (key: string): string | null => {
@@ -65,8 +63,8 @@ const normalizeSessionUser = (
     typeof value.userId === "string" && value.userId.trim().length > 0
       ? value.userId.trim()
       : value.staffId != null
-      ? String(value.staffId)
-      : "";
+        ? String(value.staffId)
+        : "";
 
   if (!userId || !value.username || !value.fullName || !value.role) {
     return null;
@@ -90,25 +88,6 @@ const normalizeSessionUser = (
         ? value.departmentName.trim()
         : null,
   };
-};
-
-export const getAccessToken = (): string | null => {
-  if (typeof window === "undefined") return null;
-  return readStored(TOKEN_KEY);
-};
-
-export const saveAccessToken = (token: string, persist = false) => {
-  if (typeof window === "undefined") return;
-  if (!token) {
-    removeStored(TOKEN_KEY);
-    clearCookie(AUTH_COOKIE_KEY);
-    emitSessionChanged();
-    return;
-  }
-
-  writeStored(TOKEN_KEY, token, persist);
-  writeCookie(AUTH_COOKIE_KEY, token);
-  emitSessionChanged();
 };
 
 export const getSessionUser = (): SessionUser | null => {
@@ -135,35 +114,20 @@ export const isPasswordChangeRequired = (): boolean => {
 };
 
 export const saveSession = (
-  token: string,
   user: SessionUser,
-  options?: { passwordChangeRequired?: boolean; persist?: boolean; tokenMaxAgeSeconds?: number }
+  options?: { passwordChangeRequired?: boolean; persist?: boolean }
 ) => {
   if (typeof window === "undefined") return;
 
   const persist = Boolean(options?.persist);
-  if (token) {
-    writeStored(TOKEN_KEY, token, persist);
-    writeCookie(
-      AUTH_COOKIE_KEY,
-      token,
-      persist && typeof options?.tokenMaxAgeSeconds === "number"
-        ? { maxAge: options.tokenMaxAgeSeconds }
-        : undefined
-    );
-  } else {
-    removeStored(TOKEN_KEY);
-    clearCookie(AUTH_COOKIE_KEY);
-  }
-
   writeStored(USER_KEY, JSON.stringify(user), persist);
-  setPasswordChangeRequired(false, persist);
+  setPasswordChangeRequired(Boolean(options?.passwordChangeRequired), persist);
   emitSessionChanged();
 };
 
 const getExistingPersistPreference = () => {
   if (typeof window === "undefined") return false;
-  return localStorage.getItem(TOKEN_KEY) !== null || localStorage.getItem(USER_KEY) !== null;
+  return localStorage.getItem(USER_KEY) !== null;
 };
 
 export const saveSessionUserOnly = (
@@ -194,12 +158,10 @@ export const isDevBypassEnabled = (): boolean => {
 
 export const clearSession = () => {
   if (typeof window === "undefined") return;
-  removeStored(TOKEN_KEY);
   removeStored(USER_KEY);
   removeStored(PASSWORD_CHANGE_REQUIRED_KEY);
   clearCookie(FORCE_PASSWORD_COOKIE_KEY);
   clearCookie(DEV_BYPASS_COOKIE_KEY);
-  clearCookie(AUTH_COOKIE_KEY);
   clearCookie(CSRF_COOKIE_KEY);
   emitSessionChanged();
 };

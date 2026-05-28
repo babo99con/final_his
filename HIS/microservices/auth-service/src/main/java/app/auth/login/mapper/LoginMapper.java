@@ -11,8 +11,6 @@ public class LoginMapper {
 
     public LoginResponse toResponse(AuthAccount account,
                                     AuthUserProfileInfo profileInfo,
-                                    String accessToken,
-                                    long expiresIn,
                                     boolean passwordChangeRequired) {
         LoginUserDto user = new LoginUserDto(
                 account.getId(),
@@ -24,9 +22,6 @@ public class LoginMapper {
         );
 
         LoginResponse response = new LoginResponse();
-        response.setAccessToken(accessToken);
-        response.setTokenType("Bearer");
-        response.setExpiresIn(expiresIn);
         response.setUser(user);
         response.setPasswordChangeRequired(passwordChangeRequired);
         return response;

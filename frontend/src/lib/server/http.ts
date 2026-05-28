@@ -2,7 +2,7 @@ import "server-only";
 
 export const fetchJson = async <T>(
   url: string,
-  accessToken: string,
+  sessionCookie: string,
   init?: RequestInit
 ): Promise<T> => {
   const response = await fetch(url, {
@@ -10,7 +10,7 @@ export const fetchJson = async <T>(
     ...init,
     headers: {
       Accept: "application/json",
-      Authorization: `Bearer ${accessToken}`,
+      Cookie: sessionCookie,
       ...(init?.headers ?? {}),
     },
   });

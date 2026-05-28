@@ -1,5 +1,5 @@
 import axios, { type AxiosInstance } from "axios";
-import { clearSession, getAccessToken, getCsrfToken } from "@/lib/auth/session";
+import { clearSession, getCsrfToken } from "@/lib/auth/session";
 
 type ApplyAuthInterceptorsOptions = {
   redirectOn401?: boolean;
@@ -31,11 +31,6 @@ export const applyAuthInterceptors = (api: AxiosInstance, options?: ApplyAuthInt
 
   api.interceptors.request.use((config) => {
     config.withCredentials = true;
-
-    const token = getAccessToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
 
     const method = (config.method || "get").toLowerCase();
     const isMutating =

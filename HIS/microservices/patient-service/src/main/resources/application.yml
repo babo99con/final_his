@@ -42,6 +42,8 @@ springdoc:
     path: /swagger-ui.html
 
 app:
+  auth:
+    session-validation-url: ${APP_AUTH_SESSION_VALIDATION_URL:http://localhost:8586/api/auth/session/validate}
   storage:
     type: minio
 

@@ -58,8 +58,6 @@ public class MenuAccessFilter extends OncePerRequestFilter {
     private boolean isUnrestrictedPath(String path) {
         return path.startsWith("/api/auth")
                 || path.startsWith("/api/menus")
-                || path.startsWith("/oauth2/")
-                || path.startsWith("/login/oauth2/")
                 || path.startsWith("/swagger-ui")
                 || path.startsWith("/v3/api-docs")
                 || path.startsWith("/api-docs")

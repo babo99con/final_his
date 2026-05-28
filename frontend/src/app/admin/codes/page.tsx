@@ -1,6 +1,5 @@
-import { cookies } from "next/headers";
 import CodeAdminClient from "@/app/admin/codes/CodeAdminClient";
-import { ACCESS_TOKEN_COOKIE_NAME } from "@/lib/staff/staffServerApi";
+import { getServerSessionCookieHeader } from "@/lib/server/sessionCookie";
 import {
   fetchInitialCodeDetails,
   fetchInitialCodeGroups,
@@ -10,18 +9,17 @@ import type { CodeDetailItem, CodeGroupItem } from "@/lib/admin/codeAdminApi";
 export const dynamic = "force-dynamic";
 
 export default async function CodeAdminPage() {
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get(ACCESS_TOKEN_COOKIE_NAME)?.value?.trim() ?? "";
+  const sessionCookie = await getServerSessionCookieHeader();
 
   let initialGroups: CodeGroupItem[] = [];
   let initialDetails: CodeDetailItem[] = [];
   let initialError: string | null = null;
 
-  if (accessToken) {
+  if (sessionCookie) {
     try {
       [initialGroups, initialDetails] = await Promise.all([
-        fetchInitialCodeGroups(accessToken, false),
-        fetchInitialCodeDetails(accessToken, undefined, false),
+        fetchInitialCodeGroups(sessionCookie, false),
+        fetchInitialCodeDetails(sessionCookie, undefined, false),
       ]);
     } catch (error) {
       initialError =

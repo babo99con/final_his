@@ -8,7 +8,7 @@ import { useMenus, useSetMenus } from "@/components/layout/MenuContext";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
 import { getMeApi } from "@/lib/auth/authApi";
-import { clearSession, getAccessToken, getSessionUser, saveSessionUserOnly } from "@/lib/auth/session";
+import { clearSession, getSessionUser, saveSessionUserOnly } from "@/lib/auth/session";
 import type { MenuNode } from "@/types/menu";
 
 type AuthStatus = "checking" | "ready" | "redirecting";
@@ -60,14 +60,6 @@ export default function MainLayout({
         return;
       }
 
-      const token = getAccessToken();
-      if (!token) {
-        if (mounted) setAuthStatus("redirecting");
-        clearSession();
-        redirectToLogin();
-        return;
-      }
-
       const user = getSessionUser();
       if (!user || !user.authRole) {
         if (mounted) setAuthStatus("checking");
@@ -88,9 +80,6 @@ export default function MainLayout({
           const response = await fetch("/api/session/menus", {
             cache: "no-store",
             credentials: "same-origin",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
           });
 
           if (response.ok) {

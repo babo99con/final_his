@@ -3,10 +3,14 @@ package kr.co.seoulit.common.client;
 import com.hms.util.api.ApiResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.List;
 import java.util.Map;
@@ -24,7 +28,21 @@ public class PatientServiceClient {
     ) {
         this.restClient = RestClient.builder()
                 .baseUrl(patientServiceBaseUrl)
+                .requestInterceptor((request, body, execution) -> {
+                    String cookie = currentCookieHeader();
+                    if (StringUtils.hasText(cookie)) {
+                        request.getHeaders().set(HttpHeaders.COOKIE, cookie);
+                    }
+                    return execution.execute(request, body);
+                })
                 .build();
+    }
+
+    private String currentCookieHeader() {
+        if (!(RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes)) {
+            return null;
+        }
+        return attributes.getRequest().getHeader(HttpHeaders.COOKIE);
     }
 
     public PatientSummary requirePatientById(Long patientId) {

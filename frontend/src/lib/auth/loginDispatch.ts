@@ -6,8 +6,6 @@ export type LoginDispatchResult =
   | {
       type: "success";
       redirectTo: string;
-      accessToken: string;
-      expiresIn: number;
       passwordChangeRequired: boolean;
     }
   | { type: "error"; message: string };
@@ -151,10 +149,9 @@ export const dispatchLogin = async ({
 
     window.localStorage.setItem(rememberLoginKey, rememberLogin ? "1" : "0");
 
-    saveSession(result.accessToken, result.user, {
-      passwordChangeRequired: false,
+    saveSession(result.user, {
+      passwordChangeRequired: result.passwordChangeRequired,
       persist: rememberLogin,
-      tokenMaxAgeSeconds: rememberLogin ? result.expiresIn : undefined,
     });
 
     const params = new URLSearchParams(window.location.search);
@@ -162,8 +159,6 @@ export const dispatchLogin = async ({
     return {
       type: "success",
       redirectTo: getSafeNextPath(params.get("next")),
-      accessToken: result.accessToken,
-      expiresIn: result.expiresIn,
       passwordChangeRequired: result.passwordChangeRequired,
     };
   } catch (error) {

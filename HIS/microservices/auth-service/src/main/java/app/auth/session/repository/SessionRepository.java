@@ -9,18 +9,9 @@ import java.util.Optional;
 
 public interface SessionRepository extends JpaRepository<AuthSession, String> {
 
-    boolean existsBySessionIdAndUserIdAndAccessTokenJtiAndIsRevokedAndExpiresAtAfter(
+    boolean existsBySessionIdAndUserIdAndIsRevokedAndExpiresAtAfter(
             String sessionId,
             String userId,
-            String accessTokenJti,
-            String isRevoked,
-            LocalDateTime currentTime
-    );
-
-    boolean existsBySessionIdAndUserIdAndRefreshTokenJtiAndIsRevokedAndExpiresAtAfter(
-            String sessionId,
-            String userId,
-            String refreshTokenJti,
             String isRevoked,
             LocalDateTime currentTime
     );

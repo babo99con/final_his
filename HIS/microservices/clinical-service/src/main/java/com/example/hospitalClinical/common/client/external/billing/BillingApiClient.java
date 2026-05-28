@@ -4,9 +4,13 @@ import com.hms.util.api.ApiResponse;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Component
 @RequiredArgsConstructor
@@ -30,7 +34,16 @@ public class BillingApiClient {
             return;
         }
         String root = base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
-        this.restClient = RestClient.builder().baseUrl(root).build();
+        this.restClient = RestClient.builder()
+                .baseUrl(root)
+                .requestInterceptor((httpRequest, body, execution) -> {
+                    String cookie = currentCookieHeader();
+                    if (StringUtils.hasText(cookie)) {
+                        httpRequest.getHeaders().set(HttpHeaders.COOKIE, cookie);
+                    }
+                    return execution.execute(httpRequest, body);
+                })
+                .build();
     }
 
     public ApiResponse<BillingClinicalCompletedResult> notifyClinicalCompleted(BillingClinicalCompletedRequest request) {
@@ -50,5 +63,12 @@ public class BillingApiClient {
             throw new IllegalStateException("수납 연동 API 응답이 비어 있습니다.");
         }
         return envelope;
+    }
+
+    private String currentCookieHeader() {
+        if (!(RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes)) {
+            return null;
+        }
+        return attributes.getRequest().getHeader(HttpHeaders.COOKIE);
     }
 }

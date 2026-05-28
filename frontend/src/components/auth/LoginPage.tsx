@@ -14,11 +14,9 @@ import {
   Typography,
 } from "@mui/material";
 import PasswordResetDialog from "@/components/auth/PasswordResetDialog";
-import { getMeApi, syncAuthSessionCookieApi } from "@/lib/auth/authApi";
 import { dispatchLogin } from "@/lib/auth/loginDispatch";
 import {
   clearSession,
-  saveAccessToken,
   saveSessionUserOnly,
   setDevBypassCookie,
 } from "@/lib/auth/session";
@@ -26,13 +24,6 @@ import { DEV_BYPASS_ENABLED } from "@/lib/common/env";
 
 const SAVED_USERNAME_KEY = "login.savedUsername";
 const REMEMBER_LOGIN_KEY = "login.rememberLogin";
-
-const getSafeNextPath = (value: string | null) => {
-  if (!value || !value.startsWith("/") || value.startsWith("//") || value.startsWith("/login")) {
-    return "/";
-  }
-  return value;
-};
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -52,48 +43,6 @@ export default function LoginPage() {
 
     const savedRememberLogin = window.localStorage.getItem(REMEMBER_LOGIN_KEY);
     setRememberLogin(savedRememberLogin === "1");
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("oauth") !== "ok") {
-      return;
-    }
-
-    const run = async () => {
-      try {
-        const token = params.get("token") || "";
-        if (!token) {
-          throw new Error("missing_oauth_token");
-        }
-
-        saveAccessToken(token, true);
-        window.history.replaceState({}, "", "/login");
-        const me = await getMeApi();
-        if (!mounted) {
-          return;
-        }
-
-        saveSessionUserOnly(me, { passwordChangeRequired: false });
-        await syncAuthSessionCookieApi({
-          accessToken: token,
-          passwordChangeRequired: false,
-        });
-        window.location.replace(getSafeNextPath(params.get("next")));
-      } catch {
-        if (!mounted) {
-          return;
-        }
-        setError("소셜 로그인 세션을 확인하지 못했습니다. 다시 시도해주세요.");
-      }
-    };
-
-    void run();
-
-    return () => {
-      mounted = false;
-    };
   }, []);
 
   const validateLoginFields = () => {
@@ -133,11 +82,6 @@ export default function LoginPage() {
         return;
       }
 
-      await syncAuthSessionCookieApi({
-        accessToken: result.accessToken,
-        passwordChangeRequired: result.passwordChangeRequired,
-        maxAgeSeconds: rememberLogin ? result.expiresIn : undefined,
-      });
       window.location.replace(result.redirectTo);
     } finally {
       setLoading(false);

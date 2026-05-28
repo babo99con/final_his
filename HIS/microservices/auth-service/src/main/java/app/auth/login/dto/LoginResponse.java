@@ -11,9 +11,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class LoginResponse {
 
-    private String accessToken;
-    private String tokenType;
-    private long expiresIn;
     private LoginUserDto user;
     private boolean passwordChangeRequired;
 }
