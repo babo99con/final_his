@@ -1,13 +1,11 @@
-package app.auth.register.repository;
+package app.auth.common.repository;
 
 import app.auth.common.entity.AuthAccount;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface RegisterAccountRepository extends JpaRepository<AuthAccount, String> {
+public interface AuthAccountRepository extends JpaRepository<AuthAccount, String> {
 
     Optional<AuthAccount> findByUsernameIgnoreCase(String username);
-
-    long countByUsernameIgnoreCase(String username);
 }

@@ -53,8 +53,6 @@ public class SecurityConfig {
                 .authorizeRequests()
                 .antMatchers(
                         "/api/auth/login",
-                        "/api/auth/register",
-                        "/api/auth/register/**",
                         "/swagger-ui/**",
                         "/swagger-ui.html",
                         "/api-docs/**",
