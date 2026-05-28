@@ -62,7 +62,6 @@ public class SecurityConfig {
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/menus").authenticated()
                 .antMatchers("/api/admin/permissions/**").hasRole("ADMIN")
-                .antMatchers(HttpMethod.GET, "/api/jpa/training/certificates/verify").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/jpa/training/*/complete").hasRole("ADMIN")
                 .antMatchers(HttpMethod.GET, "/api/jpa/training/*/completed-members").hasRole("ADMIN")
                 .antMatchers(HttpMethod.GET, "/api/jpa/training/*/members").hasRole("ADMIN")

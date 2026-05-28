@@ -14,8 +14,6 @@ export const getEffectiveSessionRole = (user: SessionUser | null | undefined) =>
 const USER_KEY = "his.user";
 const PASSWORD_CHANGE_REQUIRED_KEY = "his.passwordChangeRequired";
 const FORCE_PASSWORD_COOKIE_KEY = "his_force_password_change";
-const DEV_BYPASS_COOKIE_KEY = "his_dev_bypass";
-const CSRF_COOKIE_KEY = "XSRF-TOKEN";
 const SESSION_CHANGED_EVENT = "his:session-changed";
 
 const readStored = (key: string): string | null => {
@@ -142,27 +140,11 @@ export const saveSessionUserOnly = (
   emitSessionChanged();
 };
 
-export const setDevBypassCookie = (enabled: boolean) => {
-  if (typeof window === "undefined") return;
-  if (enabled) {
-    writeCookie(DEV_BYPASS_COOKIE_KEY, "1");
-    return;
-  }
-  clearCookie(DEV_BYPASS_COOKIE_KEY);
-};
-
-export const isDevBypassEnabled = (): boolean => {
-  if (typeof window === "undefined") return false;
-  return getCookieValue(DEV_BYPASS_COOKIE_KEY) === "1";
-};
-
 export const clearSession = () => {
   if (typeof window === "undefined") return;
   removeStored(USER_KEY);
   removeStored(PASSWORD_CHANGE_REQUIRED_KEY);
   clearCookie(FORCE_PASSWORD_COOKIE_KEY);
-  clearCookie(DEV_BYPASS_COOKIE_KEY);
-  clearCookie(CSRF_COOKIE_KEY);
   emitSessionChanged();
 };
 
@@ -179,5 +161,3 @@ export const getCookieValue = (name: string): string | null => {
   }
   return null;
 };
-
-export const getCsrfToken = (): string | null => getCookieValue(CSRF_COOKIE_KEY);

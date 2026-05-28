@@ -1,5 +1,5 @@
 import axios, { type AxiosInstance } from "axios";
-import { clearSession, getCsrfToken } from "@/lib/auth/session";
+import { clearSession } from "@/lib/auth/session";
 
 type ApplyAuthInterceptorsOptions = {
   redirectOn401?: boolean;
@@ -31,18 +31,6 @@ export const applyAuthInterceptors = (api: AxiosInstance, options?: ApplyAuthInt
 
   api.interceptors.request.use((config) => {
     config.withCredentials = true;
-
-    const method = (config.method || "get").toLowerCase();
-    const isMutating =
-      method === "post" || method === "put" || method === "patch" || method === "delete";
-
-    if (isMutating) {
-      const csrfToken = getCsrfToken();
-      if (csrfToken) {
-        config.headers["X-CSRF-Token"] = csrfToken;
-      }
-    }
-
     return config;
   });
 
