@@ -41,6 +41,8 @@ services:
         impdp system/$${ORACLE_PASSWORD}@//oracle:1521/XE directory=RESTORE_DIR dumpfile=$${HOSPITAL_DUMP_FILE} logfile=hospital_restore.imp.log schemas=HOSPITAL table_exists_action=replace
         echo 'Seeding small demo data...'
         sqlplus -s system/$${ORACLE_PASSWORD}@//oracle:1521/XE @/restore/seed_demo_data.sql
+        echo 'Seeding role menu permissions...'
+        sqlplus -s system/$${ORACLE_PASSWORD}@//oracle:1521/XE @/restore/seed_role_menu_permissions.sql
         echo 'Oracle restore complete.'
     restart: "no"
 
