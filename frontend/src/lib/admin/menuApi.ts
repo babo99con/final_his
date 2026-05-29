@@ -14,7 +14,7 @@ const api = axios.create({
 });
 applyAuthInterceptors(api, { redirectOn401: false });
 
-const MENU_ENDPOINT_CANDIDATES = ["/api/admin/menus", "/api/menus"] as const;
+const MENU_ENDPOINT_CANDIDATES = ["/api/menus"] as const;
 const CREATE_ENDPOINT_CANDIDATES = ["/api/admin/menus"] as const;
 const UPDATE_ENDPOINT_CANDIDATES = ["/api/admin/menus"] as const;
 

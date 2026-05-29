@@ -870,17 +870,17 @@ const measureMenuTree = (menus: MenuNode[]) => {
   return { totalNodes, maxDepth };
 };
 
-export const fetchServerMenus = async (): Promise<MenuNode[]> => {
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore
-    .getAll()
-    .map((cookie) => `${cookie.name}=${encodeURIComponent(cookie.value)}`)
-    .join("; ");
+export const fetchServerMenusWithCookie = async (sessionCookie: string): Promise<MenuNode[]> => {
   if (!sessionCookie) {
     return [];
   }
 
-  const rawBaseUrl = process.env.NEXT_PUBLIC_MENU_API_BASE_URL?.trim() ?? "";
+  const rawBaseUrl = (
+    process.env.MENU_API_INTERNAL_URL ??
+    process.env.AUTH_API_INTERNAL_URL ??
+    process.env.NEXT_PUBLIC_MENU_API_BASE_URL ??
+    ""
+  ).trim();
   if (!rawBaseUrl) {
     return [];
   }
@@ -900,4 +900,14 @@ export const fetchServerMenus = async (): Promise<MenuNode[]> => {
   } catch {
     return [];
   }
+};
+
+export const fetchServerMenus = async (): Promise<MenuNode[]> => {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore
+    .getAll()
+    .map((cookie) => `${cookie.name}=${encodeURIComponent(cookie.value)}`)
+    .join("; ");
+
+  return fetchServerMenusWithCookie(sessionCookie);
 };

@@ -361,6 +361,14 @@ services:
         BILLING_API_INTERNAL_URL: http://billing-service:8081
         NOTIFICATION_API_INTERNAL_URL: http://auth-service:8586
     container_name: final-his-frontend
+    environment:
+      MENU_API_INTERNAL_URL: http://auth-service:8586
+      NEXT_PUBLIC_MENU_API_BASE_URL: http://auth-service:8586
+      AUTH_API_INTERNAL_URL: http://auth-service:8586
+      PATIENTS_API_INTERNAL_URL: http://patient-service:8182
+      RECEPTION_API_INTERNAL_URL: http://reception-service:8283
+      BILLING_API_INTERNAL_URL: http://billing-service:8081
+      NOTIFICATION_API_INTERNAL_URL: http://auth-service:8586
     depends_on:
       auth-service:
         condition: service_started

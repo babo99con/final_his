@@ -7,9 +7,9 @@ import RouteAccessGuard from "@/components/auth/RouteAccessGuard";
 import { useMenus, useSetMenus } from "@/components/layout/MenuContext";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
+import { fetchMenusApi } from "@/lib/admin/menuApi";
 import { getMeApi } from "@/lib/auth/authApi";
 import { clearSession, getSessionUser, saveSessionUserOnly } from "@/lib/auth/session";
-import type { MenuNode } from "@/types/menu";
 
 type AuthStatus = "checking" | "ready" | "redirecting";
 
@@ -75,18 +75,11 @@ export default function MainLayout({
         }
       }
 
-      if (setMenus && currentPath.startsWith("/admin")) {
+      if (setMenus) {
         try {
-          const response = await fetch("/api/session/menus", {
-            cache: "no-store",
-            credentials: "same-origin",
-          });
-
-          if (response.ok) {
-            const payload = (await response.json()) as { menus?: MenuNode[] };
-            if (mounted && Array.isArray(payload.menus)) {
-              setMenus((prev) => (payload.menus!.length > 0 || prev.length === 0 ? payload.menus! : prev));
-            }
+          const freshMenus = await fetchMenusApi();
+          if (mounted) {
+            setMenus(freshMenus);
           }
         } catch {
           // Keep the last known menu state when refresh fails.
