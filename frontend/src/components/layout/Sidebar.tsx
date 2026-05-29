@@ -251,10 +251,9 @@ export default function Sidebar({ menus: initialMenus, width = 240 }: SidebarPro
   const [openMap, setOpenMap] = React.useState<Record<number, boolean>>({});
   const [fallbackMenus, setFallbackMenus] = React.useState<MenuNode[]>([]);
   const sourceMenus = initialMenus.length > 0 ? initialMenus : fallbackMenus;
-  const displaySourceMenus = sourceMenus.length > 0 ? sourceMenus : DEFAULT_SIDEBAR_MENUS;
   const menus = React.useMemo(
-    () => ensureStaffShortcuts(stripHiddenMenus(displaySourceMenus)),
-    [displaySourceMenus]
+    () => ensureStaffShortcuts(stripHiddenMenus(sourceMenus)),
+    [sourceMenus]
   );
   const loading = false;
   const menuLoadError = false;
