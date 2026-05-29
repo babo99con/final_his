@@ -178,13 +178,12 @@ SELECT
     'STAFF',
     MENU_ID,
     'Y',
-    CASE WHEN MENU_ID IN (1610, 1620) THEN 'Y' ELSE 'N' END,
-    CASE WHEN MENU_ID IN (1610, 1620) THEN 'Y' ELSE 'N' END,
+    'N',
+    'N',
     'N'
 FROM HOSPITAL.CMH_MENU
 WHERE MENU_ID IN (
-    1,
-    1600, 1610, 1620, 1630
+    1
 );
 
 COMMIT;
