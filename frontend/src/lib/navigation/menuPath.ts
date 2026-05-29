@@ -18,7 +18,6 @@ const LEGACY_PATH_MAP: Record<string, string> = {
   "/nurse/reception": "/medical_support/dashboard",
   "/nurse/support": "/medical_support/dashboard",
   "/display": "/clinical",
-  "/staff/list": "/staff",
   "/staff/setting": "/staff",
   "/staff/members": "/staff",
   "/staff/Basiclnfo": "/staff",
@@ -31,18 +30,6 @@ const LEGACY_PATH_MAP: Record<string, string> = {
   "/staff/positions": "/staff/position",
   "/staff/position/list": "/staff/position",
   "/staff/position": "/staff/position",
-  "/board": "/admin",
-  "/board/notices": "/admin",
-  "/board/schedule": "/admin",
-  "/board/events": "/admin",
-  "/board/docs": "/admin",
-  "/board/leave": "/admin",
-  "/board/shifts": "/admin",
-  "/board/shifts/weekly": "/admin",
-  "/board/shifts/daily": "/admin",
-  "/board/training": "/admin",
-  "/board/handover": "/admin",
-  "/board/meetings": "/admin",
 };
 
 const normalizeRawPath = (path: string) => {
