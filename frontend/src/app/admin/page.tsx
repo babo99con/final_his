@@ -49,7 +49,7 @@ export default function AdminPage() {
 
   const actions = [
     { href: "/admin/codes", label: "코드 관리", variant: "contained" as const },
-    { href: "/admin/permissions", label: "메뉴 관리", variant: "outlined" as const },
+    { href: "/admin/permissions/menu", label: "메뉴 관리", variant: "outlined" as const },
   ].filter((action) => allowedPaths.has(action.href));
 
   return (
