@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import * as React from "react";
 import {
   Box,
   Button,
@@ -17,6 +18,8 @@ import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
 import PersonSearchOutlinedIcon from "@mui/icons-material/PersonSearchOutlined";
 import MonetizationOnOutlinedIcon from "@mui/icons-material/MonetizationOnOutlined";
 import MainLayout from "@/components/layout/MainLayout";
+import { useMenus } from "@/components/layout/MenuContext";
+import type { MenuNode } from "@/types/menu";
 
 const QUICK_MODULES = [
   {
@@ -84,7 +87,50 @@ const QUICK_MODULES = [
   },
 ] as const;
 
+const collectMenuPaths = (menus: MenuNode[]) => {
+  const paths = new Set<string>();
+
+  const collectOneMenu = (menu: MenuNode) => {
+    const menuPath = menu.path?.trim();
+    if (menuPath) {
+      paths.add(menuPath);
+    }
+
+    for (const child of menu.children ?? []) {
+      collectOneMenu(child);
+    }
+  };
+
+  for (const menu of menus) {
+    collectOneMenu(menu);
+  }
+
+  return paths;
+};
+
+const canOpenModule = (moduleHref: string, allowedPaths: Set<string>) => {
+  for (const allowedPath of allowedPaths) {
+    if (moduleHref === allowedPath) {
+      return true;
+    }
+    if (moduleHref.startsWith(`${allowedPath}/`)) {
+      return true;
+    }
+    if (allowedPath.startsWith(`${moduleHref}/`)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 export default function HomePage() {
+  const menus = useMenus();
+  const allowedPaths = React.useMemo(() => collectMenuPaths(menus), [menus]);
+  const visibleModules = QUICK_MODULES.filter((module) =>
+    canOpenModule(module.href, allowedPaths)
+  );
+
   const handleModuleNavigation = (href: string) => {
     if (typeof window === "undefined") {
       return;
@@ -107,7 +153,7 @@ export default function HomePage() {
             },
           }}
         >
-          {QUICK_MODULES.map((module) => (
+          {visibleModules.map((module) => (
             <Card
               key={module.key}
               sx={{

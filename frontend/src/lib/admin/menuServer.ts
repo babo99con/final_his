@@ -255,10 +255,10 @@ const extractApiMessage = (payload: unknown) => {
   return typeof message === "string" ? message : null;
 };
 
-const buildRequestHeaders = (accessToken: string, includeJson = false) => {
+const buildRequestHeaders = (sessionCookie: string, includeJson = false) => {
   const headers: Record<string, string> = {
     Accept: "application/json",
-    Authorization: `Bearer ${accessToken}`,
+    Cookie: sessionCookie,
   };
 
   if (includeJson) {
@@ -491,7 +491,7 @@ const buildMenuByNormalizedPath = (menus: MenuNode[]) => {
 
 const fetchMenusByEndpointsWithToken = async (
   baseUrl: string,
-  accessToken: string,
+  sessionCookie: string,
   endpoints: readonly string[]
 ): Promise<MenuNode[]> => {
   let lastError: Error | null = null;
@@ -499,7 +499,7 @@ const fetchMenusByEndpointsWithToken = async (
   for (const endpoint of endpoints) {
     const response = await fetch(`${baseUrl}${endpoint}`, {
       cache: "no-store",
-      headers: buildRequestHeaders(accessToken),
+      headers: buildRequestHeaders(sessionCookie),
     });
 
     if (response.ok) {
@@ -532,15 +532,15 @@ const fetchMenusByEndpointsWithToken = async (
   return [];
 };
 
-const fetchMenusWithToken = async (baseUrl: string, accessToken: string) =>
-  fetchMenusByEndpointsWithToken(baseUrl, accessToken, [MENU_ENDPOINT]);
+const fetchMenusWithToken = async (baseUrl: string, sessionCookie: string) =>
+  fetchMenusByEndpointsWithToken(baseUrl, sessionCookie, [MENU_ENDPOINT]);
 
-const fetchAllMenusWithToken = async (baseUrl: string, accessToken: string) =>
-  fetchMenusByEndpointsWithToken(baseUrl, accessToken, MENU_FETCH_ENDPOINT_CANDIDATES);
+const fetchAllMenusWithToken = async (baseUrl: string, sessionCookie: string) =>
+  fetchMenusByEndpointsWithToken(baseUrl, sessionCookie, MENU_FETCH_ENDPOINT_CANDIDATES);
 
 const createMenuWithToken = async (
   baseUrl: string,
-  accessToken: string,
+  sessionCookie: string,
   input: {
     parentId: number | null;
     name: string;
@@ -563,7 +563,7 @@ const createMenuWithToken = async (
   for (const endpoint of CREATE_ENDPOINT_CANDIDATES) {
     const response = await fetch(`${baseUrl}${endpoint}`, {
       method: "POST",
-      headers: buildRequestHeaders(accessToken, true),
+      headers: buildRequestHeaders(sessionCookie, true),
       body: JSON.stringify(payload),
       cache: "no-store",
     });
@@ -593,7 +593,7 @@ const createMenuWithToken = async (
 
 const updateMenuWithToken = async (
   baseUrl: string,
-  accessToken: string,
+  sessionCookie: string,
   input: {
     menuId: number;
     parentId: number | null;
@@ -613,7 +613,7 @@ const updateMenuWithToken = async (
     const url = `${baseUrl}${endpoint}/${input.menuId}`;
     const response = await fetch(url, {
       method: "PUT",
-      headers: buildRequestHeaders(accessToken, true),
+      headers: buildRequestHeaders(sessionCookie, true),
       body: JSON.stringify(payload),
       cache: "no-store",
     });
@@ -637,14 +637,14 @@ const updateMenuWithToken = async (
   }
 };
 
-const fetchRoleMenuAssignmentsWithToken = async (baseUrl: string, accessToken: string) => {
+const fetchRoleMenuAssignmentsWithToken = async (baseUrl: string, sessionCookie: string) => {
   let lastError: Error | null = null;
   let sawSuccessfulEmptyResponse = false;
 
   for (const endpoint of PERMISSION_FETCH_ENDPOINTS) {
     const response = await fetch(`${baseUrl}${endpoint}`, {
       cache: "no-store",
-      headers: buildRequestHeaders(accessToken),
+      headers: buildRequestHeaders(sessionCookie),
     });
 
     if (response.ok) {
@@ -685,7 +685,7 @@ const fetchRoleMenuAssignmentsWithToken = async (baseUrl: string, accessToken: s
 
 const saveRoleMenuAssignmentsWithToken = async (
   baseUrl: string,
-  accessToken: string,
+  sessionCookie: string,
   assignments: RoleMenuPermissionAssignment[]
 ) => {
   const payload = {
@@ -701,7 +701,7 @@ const saveRoleMenuAssignmentsWithToken = async (
   for (const endpoint of PERMISSION_SAVE_ENDPOINTS) {
     const response = await fetch(`${baseUrl}${endpoint.path}`, {
       method: endpoint.method.toUpperCase(),
-      headers: buildRequestHeaders(accessToken, true),
+      headers: buildRequestHeaders(sessionCookie, true),
       body: JSON.stringify(payload),
       cache: "no-store",
     });
@@ -727,7 +727,7 @@ const saveRoleMenuAssignmentsWithToken = async (
 
 const ensureAdminPermissionMenus = async (
   baseUrl: string,
-  accessToken: string,
+  sessionCookie: string,
   currentMenus: MenuNode[]
 ) => {
   try {
@@ -740,7 +740,7 @@ const ensureAdminPermissionMenus = async (
       return visibleMenus;
     }
 
-    let allMenus = await fetchAllMenusWithToken(baseUrl, accessToken);
+    let allMenus = await fetchAllMenusWithToken(baseUrl, sessionCookie);
     let allPathMap = buildMenuByNormalizedPath(allMenus);
     let mutated = false;
 
@@ -756,7 +756,7 @@ const ensureAdminPermissionMenus = async (
 
       const existingMenu = allPathMap.get(definition.path);
       if (!existingMenu) {
-        await createMenuWithToken(baseUrl, accessToken, {
+        await createMenuWithToken(baseUrl, sessionCookie, {
           parentId: parentMenu.id,
           name: definition.name,
           path: definition.path,
@@ -764,7 +764,7 @@ const ensureAdminPermissionMenus = async (
           adminOnly: "Y",
         });
 
-        allMenus = await fetchAllMenusWithToken(baseUrl, accessToken);
+        allMenus = await fetchAllMenusWithToken(baseUrl, sessionCookie);
         allPathMap = buildMenuByNormalizedPath(allMenus);
         mutated = true;
         continue;
@@ -779,7 +779,7 @@ const ensureAdminPermissionMenus = async (
         continue;
       }
 
-      await updateMenuWithToken(baseUrl, accessToken, {
+      await updateMenuWithToken(baseUrl, sessionCookie, {
         menuId: existingMenu.id,
         parentId: parentMenu.id,
         code: existingMenu.code,
@@ -791,13 +791,13 @@ const ensureAdminPermissionMenus = async (
         adminOnly: "Y",
       });
 
-      allMenus = await fetchAllMenusWithToken(baseUrl, accessToken);
+      allMenus = await fetchAllMenusWithToken(baseUrl, sessionCookie);
       allPathMap = buildMenuByNormalizedPath(allMenus);
       mutated = true;
     }
 
     if (mutated) {
-      visibleMenus = await fetchMenusWithToken(baseUrl, accessToken);
+      visibleMenus = await fetchMenusWithToken(baseUrl, sessionCookie);
     }
 
     const visiblePathMap = buildMenuByNormalizedPath(visibleMenus);
@@ -817,7 +817,7 @@ const ensureAdminPermissionMenus = async (
       return visibleMenus;
     }
 
-    const assignments = await fetchRoleMenuAssignmentsWithToken(baseUrl, accessToken);
+    const assignments = await fetchRoleMenuAssignmentsWithToken(baseUrl, sessionCookie);
     const assignmentKeySet = new Set(
       assignments.map(
         (assignment) =>
@@ -844,8 +844,8 @@ const ensureAdminPermissionMenus = async (
       return visibleMenus;
     }
 
-    await saveRoleMenuAssignmentsWithToken(baseUrl, accessToken, mergedAssignments);
-    return await fetchMenusWithToken(baseUrl, accessToken);
+    await saveRoleMenuAssignmentsWithToken(baseUrl, sessionCookie, mergedAssignments);
+    return await fetchMenusWithToken(baseUrl, sessionCookie);
   } catch (error) {
     console.warn("[menuServer] failed to sync admin permission menus", error);
     return currentMenus;
@@ -870,15 +870,17 @@ const measureMenuTree = (menus: MenuNode[]) => {
   return { totalNodes, maxDepth };
 };
 
-export const fetchServerMenus = async (accessTokenOverride?: string): Promise<MenuNode[]> => {
-  const cookieStore = await cookies();
-  const accessToken =
-    accessTokenOverride?.trim() || cookieStore.get("his_access_token")?.value?.trim() || "";
-  if (!accessToken) {
+export const fetchServerMenusWithCookie = async (sessionCookie: string): Promise<MenuNode[]> => {
+  if (!sessionCookie) {
     return [];
   }
 
-  const rawBaseUrl = process.env.NEXT_PUBLIC_MENU_API_BASE_URL?.trim() ?? "";
+  const rawBaseUrl = (
+    process.env.MENU_API_INTERNAL_URL ??
+    process.env.AUTH_API_INTERNAL_URL ??
+    process.env.NEXT_PUBLIC_MENU_API_BASE_URL ??
+    ""
+  ).trim();
   if (!rawBaseUrl) {
     return [];
   }
@@ -886,8 +888,8 @@ export const fetchServerMenus = async (accessTokenOverride?: string): Promise<Me
   const baseUrl = rawBaseUrl.endsWith("/") ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
 
   try {
-    let menus = await fetchMenusWithToken(baseUrl, accessToken);
-    menus = await ensureAdminPermissionMenus(baseUrl, accessToken, menus);
+    let menus = await fetchMenusWithToken(baseUrl, sessionCookie);
+    menus = await ensureAdminPermissionMenus(baseUrl, sessionCookie, menus);
     const stats = measureMenuTree(menus);
     if (stats.totalNodes > 200 || stats.maxDepth >= MAX_MENU_DEPTH) {
       console.warn(
@@ -898,4 +900,14 @@ export const fetchServerMenus = async (accessTokenOverride?: string): Promise<Me
   } catch {
     return [];
   }
+};
+
+export const fetchServerMenus = async (): Promise<MenuNode[]> => {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore
+    .getAll()
+    .map((cookie) => `${cookie.name}=${encodeURIComponent(cookie.value)}`)
+    .join("; ");
+
+  return fetchServerMenusWithCookie(sessionCookie);
 };

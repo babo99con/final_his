@@ -14,10 +14,16 @@ import com.hospital.billing.repository.BillRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Collections;
@@ -141,7 +147,12 @@ public class BillingInsuranceService {
     }
 
     private JsonNode fetchResultNode(String url) {
-        ResponseEntity<JsonNode> response = restTemplate.getForEntity(url, JsonNode.class);
+        ResponseEntity<JsonNode> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                new HttpEntity<>(buildForwardHeaders()),
+                JsonNode.class
+        );
         JsonNode body = response.getBody();
 
         if (body == null) {
@@ -155,6 +166,22 @@ public class BillingInsuranceService {
         }
 
         return body.get("result");
+    }
+
+    private HttpHeaders buildForwardHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        String cookie = currentCookieHeader();
+        if (StringUtils.hasText(cookie)) {
+            headers.set(HttpHeaders.COOKIE, cookie);
+        }
+        return headers;
+    }
+
+    private String currentCookieHeader() {
+        if (!(RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes)) {
+            return null;
+        }
+        return attributes.getRequest().getHeader(HttpHeaders.COOKIE);
     }
 
     private InsuranceCalculationSummaryResponse calculateInsuranceSummary(InsuranceInfoResponse validInsurance,

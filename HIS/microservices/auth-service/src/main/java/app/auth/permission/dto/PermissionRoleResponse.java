@@ -1,8 +1,14 @@
 package app.auth.permission.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "권한을 묶는 역할 정보입니다.")
 public class PermissionRoleResponse {
 
+    @Schema(description = "역할 코드입니다. 예: ADMIN, DOCTOR")
     private String roleCode;
+
+    @Schema(description = "사람이 읽기 쉬운 역할 이름입니다.")
     private String roleName;
 
     public PermissionRoleResponse() {

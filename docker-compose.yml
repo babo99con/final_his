@@ -39,6 +39,10 @@ services:
         sqlplus -s system/$${ORACLE_PASSWORD}@//oracle:1521/XE @/restore/create_hospital_user.sql
         echo 'Importing HOSPITAL dump...'
         impdp system/$${ORACLE_PASSWORD}@//oracle:1521/XE directory=RESTORE_DIR dumpfile=$${HOSPITAL_DUMP_FILE} logfile=hospital_restore.imp.log schemas=HOSPITAL table_exists_action=replace
+        echo 'Seeding small demo data...'
+        sqlplus -s system/$${ORACLE_PASSWORD}@//oracle:1521/XE @/restore/seed_demo_data.sql
+        echo 'Seeding role menu permissions...'
+        sqlplus -s system/$${ORACLE_PASSWORD}@//oracle:1521/XE @/restore/seed_role_menu_permissions.sql
         echo 'Oracle restore complete.'
     restart: "no"
 
@@ -131,13 +135,12 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
       SPRING_DATA_REDIS_PASSWORD:
-      APP_VERIFY_EMAIL_MOCK: "true"
-      APP_VERIFY_SMS_MOCK: "true"
       MINIO_ENDPOINT: http://minio:9000
       MINIO_INTERNAL_URL: http://minio:9000
       MINIO_PUBLIC_URL: http://localhost:${MINIO_API_PORT:-9000}
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      APP_AUTH_SESSION_ABSOLUTE_SECONDS: ${APP_AUTH_SESSION_ABSOLUTE_SECONDS:-3600}
     ports:
       - "${AUTH_PORT:-8586}:8586"
 
@@ -156,8 +159,11 @@ services:
         condition: service_healthy
       minio-init:
         condition: service_completed_successfully
+      auth-service:
+        condition: service_started
     environment:
       SERVER_PORT: 8182
+      APP_AUTH_SESSION_VALIDATION_URL: http://auth-service:8586/api/auth/session/validate
       SPRING_DATASOURCE_URL: jdbc:oracle:thin:@//oracle:1521/XE
       SPRING_DATASOURCE_USERNAME: HOSPITAL
       SPRING_DATASOURCE_PASSWORD: 1111
@@ -183,8 +189,11 @@ services:
         condition: service_healthy
       minio-init:
         condition: service_completed_successfully
+      auth-service:
+        condition: service_started
     environment:
       SERVER_PORT: 8283
+      APP_AUTH_SESSION_VALIDATION_URL: http://auth-service:8586/api/auth/session/validate
       SPRING_DATASOURCE_URL: jdbc:oracle:thin:@//oracle:1521/XE
       SPRING_DATASOURCE_USERNAME: HOSPITAL
       SPRING_DATASOURCE_PASSWORD: 1111
@@ -208,8 +217,11 @@ services:
         condition: service_completed_successfully
       minio-init:
         condition: service_completed_successfully
+      auth-service:
+        condition: service_started
     environment:
       SERVER_PORT: 8023
+      APP_AUTH_SESSION_VALIDATION_URL: http://auth-service:8586/api/auth/session/validate
       SPRING_DATASOURCE_URL: jdbc:oracle:thin:@//oracle:1521/XE
       SPRING_DATASOURCE_USERNAME: HOSPITAL
       SPRING_DATASOURCE_PASSWORD: 1111
@@ -237,13 +249,17 @@ services:
         condition: service_started
       billing-service:
         condition: service_started
+      auth-service:
+        condition: service_started
     environment:
       SERVER_PORT: 8090
+      APP_AUTH_SESSION_VALIDATION_URL: http://auth-service:8586/api/auth/session/validate
       SPRING_DATASOURCE_URL: jdbc:oracle:thin:@//oracle:1521/XE
       SPRING_DATASOURCE_USERNAME: HOSPITAL
       SPRING_DATASOURCE_PASSWORD: 1111
       KAFKA_BROKERS: kafka
       KAFKA_BROKER_PORT: 9092
+      APP_SUPPORT_FEEDBACK_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       RECEPTION_API_BASE_URL: http://reception-service:8283
       CLINICAL_SUPPORT_API_BASE_URL: http://clinic-support-service:8189
       BILLING_API_BASE_URL: http://billing-service:8081
@@ -267,8 +283,11 @@ services:
         condition: service_healthy
       minio-init:
         condition: service_completed_successfully
+      auth-service:
+        condition: service_started
     environment:
       SERVER_PORT: 8189
+      APP_AUTH_SESSION_VALIDATION_URL: http://auth-service:8586/api/auth/session/validate
       SPRING_DATASOURCE_URL: jdbc:log4jdbc:oracle:thin:@//oracle:1521/XE
       SPRING_DATASOURCE_USERNAME: HOSPITAL
       SPRING_DATASOURCE_PASSWORD: 1111
@@ -302,8 +321,11 @@ services:
         condition: service_healthy
       patient-service:
         condition: service_started
+      auth-service:
+        condition: service_started
     environment:
       SERVER_PORT: 8081
+      APP_AUTH_SESSION_VALIDATION_URL: http://auth-service:8586/api/auth/session/validate
       SPRING_DATASOURCE_URL: jdbc:oracle:thin:@//oracle:1521/XE
       SPRING_DATASOURCE_USERNAME: HOSPITAL
       SPRING_DATASOURCE_PASSWORD: 1111
@@ -339,6 +361,14 @@ services:
         BILLING_API_INTERNAL_URL: http://billing-service:8081
         NOTIFICATION_API_INTERNAL_URL: http://auth-service:8586
     container_name: final-his-frontend
+    environment:
+      MENU_API_INTERNAL_URL: http://auth-service:8586
+      NEXT_PUBLIC_MENU_API_BASE_URL: http://auth-service:8586
+      AUTH_API_INTERNAL_URL: http://auth-service:8586
+      PATIENTS_API_INTERNAL_URL: http://patient-service:8182
+      RECEPTION_API_INTERNAL_URL: http://reception-service:8283
+      BILLING_API_INTERNAL_URL: http://billing-service:8081
+      NOTIFICATION_API_INTERNAL_URL: http://auth-service:8586
     depends_on:
       auth-service:
         condition: service_started

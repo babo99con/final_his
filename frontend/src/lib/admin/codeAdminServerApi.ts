@@ -22,17 +22,17 @@ const unwrap = <T>(payload: ApiResponse<T>, fallback: string): T => {
 };
 
 export const fetchInitialCodeGroups = async (
-  accessToken: string,
+  sessionCookie: string,
   activeOnly: boolean
 ): Promise<CodeGroupItem[]> => {
   const url = new URL(`${toBaseUrl()}/api/admin/codes/groups`);
   url.searchParams.set("activeOnly", String(activeOnly));
-  const payload = await fetchJson<ApiResponse<CodeGroupItem[]>>(url.toString(), accessToken);
+  const payload = await fetchJson<ApiResponse<CodeGroupItem[]>>(url.toString(), sessionCookie);
   return unwrap(payload, "코드 그룹 조회에 실패했습니다.");
 };
 
 export const fetchInitialCodeDetails = async (
-  accessToken: string,
+  sessionCookie: string,
   groupCode?: string,
   activeOnly = false
 ): Promise<CodeDetailItem[]> => {
@@ -41,6 +41,6 @@ export const fetchInitialCodeDetails = async (
     url.searchParams.set("groupCode", groupCode);
   }
   url.searchParams.set("activeOnly", String(activeOnly));
-  const payload = await fetchJson<ApiResponse<CodeDetailItem[]>>(url.toString(), accessToken);
+  const payload = await fetchJson<ApiResponse<CodeDetailItem[]>>(url.toString(), sessionCookie);
   return unwrap(payload, "상세 코드 조회에 실패했습니다.");
 };

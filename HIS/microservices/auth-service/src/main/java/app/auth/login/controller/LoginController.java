@@ -4,8 +4,10 @@ import app.auth.login.dto.LoginRequest;
 import app.auth.login.dto.LoginResponse;
 import app.auth.login.dto.LoginResult;
 import app.auth.login.service.LoginService;
-import app.auth.session.service.SessionService;
+import app.auth.session.service.SessionAuthenticationService;
 import com.hms.util.api.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -15,80 +17,45 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "로그인", description = "아이디와 비밀번호로 로그인하고 서버 세션을 만드는 API입니다.")
 public class LoginController {
 
     private final LoginService loginService;
-    private final SessionService sessionService;
+    private final SessionAuthenticationService sessionAuthenticationService;
 
     public LoginController(LoginService loginService,
-                           SessionService sessionService) {
+                           SessionAuthenticationService sessionAuthenticationService) {
         this.loginService = loginService;
-        this.sessionService = sessionService;
+        this.sessionAuthenticationService = sessionAuthenticationService;
     }
 
     @PostMapping("/login")
+    @Operation(
+            summary = "로그인",
+            description = "아이디와 비밀번호가 맞으면 로그인됩니다. 성공하면 브라우저에 JSESSIONID 세션 쿠키가 저장됩니다."
+    )
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest request,
-                                                            HttpServletResponse response) {
+                                                            HttpServletRequest httpRequest) {
         try {
             LoginResult loginResult = loginService.login(request);
-            sessionService.addAuthCookie(response, loginResult.getResponse().getAccessToken());
-            sessionService.addRefreshCookie(response, loginResult.getRefreshToken());
+            LoginResponse loginResponse = loginResult.getResponse();
+            sessionAuthenticationService.establish(httpRequest, loginResponse.getUser());
 
-            return ResponseEntity.ok(ApiResponse.ok(loginResult.getResponse()));
+            ApiResponse<LoginResponse> responseBody = ApiResponse.ok(loginResponse);
+
+            return ResponseEntity.ok(responseBody);
         } catch (BadCredentialsException e) {
-            sessionService.clearAuthCookie(response);
-            sessionService.clearRefreshCookie(response);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error("AUTH_INVALID_CREDENTIALS"));
+            ApiResponse<LoginResponse> errorBody = ApiResponse.error("AUTH_INVALID_CREDENTIALS");
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBody);
         } catch (AccessDeniedException e) {
-            sessionService.clearAuthCookie(response);
-            sessionService.clearRefreshCookie(response);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ApiResponse.error(e.getMessage()));
+            ApiResponse<LoginResponse> errorBody = ApiResponse.error(e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody);
         }
-    }
-
-    @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<LoginResponse>> refresh(HttpServletRequest request,
-                                                              HttpServletResponse response) {
-        try {
-            String refreshToken = readCookie(request, SessionService.REFRESH_TOKEN_COOKIE);
-            LoginResult loginResult = loginService.refresh(refreshToken);
-            sessionService.addAuthCookie(response, loginResult.getResponse().getAccessToken());
-            sessionService.addRefreshCookie(response, loginResult.getRefreshToken());
-
-            return ResponseEntity.ok(ApiResponse.ok(loginResult.getResponse()));
-        } catch (BadCredentialsException e) {
-            sessionService.clearAuthCookie(response);
-            sessionService.clearRefreshCookie(response);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error(e.getMessage()));
-        } catch (AccessDeniedException e) {
-            sessionService.clearAuthCookie(response);
-            sessionService.clearRefreshCookie(response);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ApiResponse.error(e.getMessage()));
-        }
-    }
-
-    private String readCookie(HttpServletRequest request, String cookieName) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies == null || cookies.length == 0) {
-            return null;
-        }
-
-        for (Cookie cookie : cookies) {
-            if (cookieName.equals(cookie.getName())) {
-                return cookie.getValue();
-            }
-        }
-
-        return null;
     }
 }

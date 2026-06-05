@@ -1,7 +1,7 @@
 package app.auth.session.service;
 
 import app.auth.common.entity.AuthAccount;
-import app.auth.register.repository.RegisterAccountRepository;
+import app.auth.common.repository.AuthAccountRepository;
 import app.auth.session.entity.AuthSession;
 import app.auth.session.repository.SessionRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,56 +9,28 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class SessionServiceImpl implements SessionService {
 
-    private final RegisterAccountRepository registerAccountRepository;
+    private final AuthAccountRepository authAccountRepository;
     private final SessionRepository sessionRepository;
 
-    @Value("${app.auth.cookie-max-age-seconds:43200}")
-    private int cookieMaxAge;
-
-    @Value("${app.auth.cookie-secure:false}")
-    private boolean cookieSecure;
-
-    @Value("${app.auth.refresh-cookie-max-age-seconds:1209600}")
-    private int refreshCookieMaxAge;
-
-    @Value("${app.auth.session.absolute-seconds:43200}")
+    @Value("${app.auth.session.absolute-seconds:3600}")
     private long absoluteSeconds;
 
-    public SessionServiceImpl(RegisterAccountRepository registerAccountRepository,
+    public SessionServiceImpl(AuthAccountRepository authAccountRepository,
                               SessionRepository sessionRepository) {
-        this.registerAccountRepository = registerAccountRepository;
+        this.authAccountRepository = authAccountRepository;
         this.sessionRepository = sessionRepository;
     }
 
     @Override
-    public void addAuthCookie(HttpServletResponse response, String token) {
-        response.addHeader("Set-Cookie", buildCookieHeader(ACCESS_TOKEN_COOKIE, token, cookieMaxAge, true));
-    }
-
-    @Override
-    public void clearAuthCookie(HttpServletResponse response) {
-        response.addHeader("Set-Cookie", buildCookieHeader(ACCESS_TOKEN_COOKIE, "", 0, true));
-    }
-
-    @Override
-    public void addRefreshCookie(HttpServletResponse response, String token) {
-        response.addHeader("Set-Cookie", buildCookieHeader(REFRESH_TOKEN_COOKIE, token, refreshCookieMaxAge, true));
-    }
-
-    @Override
-    public void clearRefreshCookie(HttpServletResponse response) {
-        response.addHeader("Set-Cookie", buildCookieHeader(REFRESH_TOKEN_COOKIE, "", 0, true));
-    }
-
-    @Override
     @Transactional
-    public void startSession(String username, String sid, String accessTokenJti, String refreshTokenJti) {
+    public void startSession(String username, String sid) {
         AuthAccount account = findAccount(username);
         if (account == null) {
             return;
@@ -68,82 +40,71 @@ public class SessionServiceImpl implements SessionService {
         AuthSession session = new AuthSession();
         session.setSessionId(sid);
         session.setUserId(account.getId());
-        session.setAccessTokenJti(accessTokenJti);
-        session.setRefreshTokenJti(refreshTokenJti);
         session.setLoginAt(now);
         session.setLastAccessAt(now);
         session.setExpiresAt(createExpiresAt(now));
         session.setIsRevoked("N");
         session.setRevokedAt(null);
 
+        // 한 사용자에게 활성 세션을 하나만 허용해 이전 로그인 세션을 명확히 폐기합니다.
         revokeActiveSessions(account.getId(), now);
         sessionRepository.save(session);
     }
 
     @Override
     @Transactional
-    public boolean isAccessTokenAliveAndTouch(String username, String sid, String accessTokenJti) {
+    public boolean isSessionAliveAndTouch(String username, String sid) {
         AuthAccount account = findAccount(username);
         if (account == null) {
             return false;
         }
 
         LocalDateTime now = LocalDateTime.now();
-        boolean alive = sessionRepository.existsBySessionIdAndUserIdAndAccessTokenJtiAndIsRevokedAndExpiresAtAfter(
+        boolean alive = sessionRepository.existsBySessionIdAndUserIdAndIsRevokedAndExpiresAtAfter(
                 sid,
                 account.getId(),
-                accessTokenJti,
                 "N",
                 now
         );
         if (alive) {
-            sessionRepository.findById(sid).ifPresent(session -> {
+            // 검증에 성공한 요청은 마지막 접근 시각을 갱신해 운영 중 추적하기 쉽게 합니다.
+            Optional<AuthSession> sessionOptional = sessionRepository.findById(sid);
+            if (sessionOptional.isPresent()) {
+                AuthSession session = sessionOptional.get();
                 session.setLastAccessAt(now);
                 sessionRepository.save(session);
-            });
+            }
         }
 
         return alive;
     }
 
     @Override
-    public boolean isRefreshTokenAlive(String username, String sid, String refreshTokenJti) {
-        AuthAccount account = findAccount(username);
-        if (account == null) {
-            return false;
-        }
-
-        return sessionRepository.existsBySessionIdAndUserIdAndRefreshTokenJtiAndIsRevokedAndExpiresAtAfter(
-                sid,
-                account.getId(),
-                refreshTokenJti,
-                "N",
-                LocalDateTime.now()
-        );
-    }
-
-    @Override
     @Transactional
-    public void rotateSessionTokens(String username, String sid, String accessTokenJti, String refreshTokenJti) {
+    public void invalidateSession(String username, String sid) {
         AuthAccount account = findAccount(username);
         if (account == null) {
             return;
         }
 
         LocalDateTime now = LocalDateTime.now();
-        sessionRepository.findBySessionIdAndUserIdAndIsRevoked(sid, account.getId(), "N")
-                .ifPresent(session -> {
-                    session.setAccessTokenJti(accessTokenJti);
-                    session.setRefreshTokenJti(refreshTokenJti);
-                    session.setLastAccessAt(now);
-                    session.setExpiresAt(createExpiresAt(now));
-                    sessionRepository.save(session);
-                });
+        Optional<AuthSession> sessionOptional =
+                sessionRepository.findBySessionIdAndUserIdAndIsRevoked(sid, account.getId(), "N");
+
+        if (sessionOptional.isEmpty()) {
+            return;
+        }
+
+        AuthSession session = sessionOptional.get();
+        session.setLastAccessAt(now);
+        session.setIsRevoked("Y");
+        session.setRevokedAt(now);
+        sessionRepository.save(session);
     }
 
     @Override
     @Transactional
-    public void invalidateSession(String username) {
+    public void invalidateUserSessions(String username) {
         AuthAccount account = findAccount(username);
         if (account == null) {
             return;
@@ -151,29 +112,6 @@ public class SessionServiceImpl implements SessionService {
 
         LocalDateTime now = LocalDateTime.now();
         revokeActiveSessions(account.getId(), now);
-    }
-
-    private String buildCookieHeader(String name, String token, int maxAge, boolean httpOnly) {
-        String value = "";
-        if (StringUtils.hasText(token)) {
-            value = token;
-        }
-
-        StringBuilder builder = new StringBuilder();
-        builder.append(name).append("=").append(value);
-        builder.append("; Path=/");
-        builder.append("; Max-Age=").append(maxAge);
-        builder.append("; SameSite=Lax");
-
-        if (httpOnly) {
-            builder.append("; HttpOnly");
-        }
-
-        if (cookieSecure) {
-            builder.append("; Secure");
-        }
-
-        return builder.toString();
     }
 
     private String normalizeUsername(String username) {
@@ -194,11 +132,16 @@ public class SessionServiceImpl implements SessionService {
             return null;
         }
 
-        return registerAccountRepository.findByUsernameIgnoreCase(normalizedUsername).orElse(null);
+        Optional<AuthAccount> accountOptional = authAccountRepository.findByUsernameIgnoreCase(normalizedUsername);
+        if (accountOptional.isEmpty()) {
+            return null;
+        }
+
+        return accountOptional.get();
     }
 
     private void revokeActiveSessions(String userId, LocalDateTime now) {
-        var activeSessions = sessionRepository.findByUserIdAndIsRevoked(userId, "N");
+        List<AuthSession> activeSessions = sessionRepository.findByUserIdAndIsRevoked(userId, "N");
         for (AuthSession session : activeSessions) {
             session.setIsRevoked("Y");
             session.setRevokedAt(now);

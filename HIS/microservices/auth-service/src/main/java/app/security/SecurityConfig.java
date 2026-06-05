@@ -1,8 +1,5 @@
 package app.security;
 
-import app.auth.oauth.handler.OAuth2AuthenticationFailureHandler;
-import app.auth.oauth.handler.OAuth2AuthenticationSuccessHandler;
-import app.security.MenuAccessFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -28,22 +25,13 @@ public class SecurityConfig {
             "PHYSIOLOGY_TEST_COORDINATOR"
     };
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final ServerRoleFilter serverRoleFilter;
     private final MenuAccessFilter menuAccessFilter;
-    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
-    private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
-                          ServerRoleFilter serverRoleFilter,
-                          MenuAccessFilter menuAccessFilter,
-                          OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
-                          OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    public SecurityConfig(ServerRoleFilter serverRoleFilter,
+                          MenuAccessFilter menuAccessFilter) {
         this.serverRoleFilter = serverRoleFilter;
         this.menuAccessFilter = menuAccessFilter;
-        this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
-        this.oAuth2AuthenticationFailureHandler = oAuth2AuthenticationFailureHandler;
     }
 
     @Bean
@@ -65,22 +53,15 @@ public class SecurityConfig {
                 .authorizeRequests()
                 .antMatchers(
                         "/api/auth/login",
-                        "/api/auth/refresh",
-                        "/api/auth/register",
-                        "/api/auth/register/**",
-                        "/api/auth/oauth/**",
-                        "/oauth2/**",
-                        "/login/oauth2/**",
                         "/swagger-ui/**",
                         "/swagger-ui.html",
                         "/api-docs/**",
                         "/v3/api-docs/**"
                 ).permitAll()
-                .antMatchers("/api/auth/email/**", "/api/auth/me", "/api/auth/logout").authenticated()
+                .antMatchers("/api/auth/me", "/api/auth/logout").authenticated()
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/menus").authenticated()
                 .antMatchers("/api/admin/permissions/**").hasRole("ADMIN")
-                .antMatchers(HttpMethod.GET, "/api/jpa/training/certificates/verify").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/jpa/training/*/complete").hasRole("ADMIN")
                 .antMatchers(HttpMethod.GET, "/api/jpa/training/*/completed-members").hasRole("ADMIN")
                 .antMatchers(HttpMethod.GET, "/api/jpa/training/*/members").hasRole("ADMIN")
@@ -102,13 +83,8 @@ public class SecurityConfig {
                 .antMatchers(HttpMethod.GET, "/api/jpa/medical-staff/**").authenticated()
                 .anyRequest().authenticated()
                 .and()
-                .oauth2Login()
-                .successHandler(oAuth2AuthenticationSuccessHandler)
-                .failureHandler(oAuth2AuthenticationFailureHandler)
-                .and()
                 .addFilterBefore(serverRoleFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(jwtAuthenticationFilter, ServerRoleFilter.class)
-                .addFilterAfter(menuAccessFilter, JwtAuthenticationFilter.class);
+                .addFilterAfter(menuAccessFilter, ServerRoleFilter.class);
 
         return http.build();
     }

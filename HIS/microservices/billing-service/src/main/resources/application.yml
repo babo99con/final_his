@@ -68,3 +68,6 @@ toss:
 patient:
   api:
     base-url: ${PATIENT_API_BASE_URL:http://localhost:8182}
+app:
+  auth:
+    session-validation-url: ${APP_AUTH_SESSION_VALIDATION_URL:http://localhost:8586/api/auth/session/validate}

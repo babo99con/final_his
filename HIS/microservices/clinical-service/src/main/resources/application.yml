@@ -65,6 +65,8 @@ mybatis:
   mapper-locations: classpath:/mapper/**/*.xml
 
 app:
+  auth:
+    session-validation-url: ${APP_AUTH_SESSION_VALIDATION_URL:http://localhost:8586/api/auth/session/validate}
   migration:
     soap-rx-to-order:
       enabled: ${SOAP_RX_TO_ORDER_MIGRATION:false}
