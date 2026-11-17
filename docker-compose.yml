@@ -9,15 +9,17 @@ services:
       - "${ORACLE_PORT:-1521}:1521"
     volumes:
       - oracle-data:/opt/oracle/oradata
-      - ./HOSPITAL_EXPORT:/dump
     healthcheck:
-      test: ["CMD-SHELL", "echo 'select 1 from dual;' | sqlplus -s system/$${ORACLE_PASSWORD}@//localhost:1521/XE | grep -q 1"]
+      test: ["CMD-SHELL", "printf 'set heading off feedback off pagesize 0\nselect 1 from dual;\nexit;\n' | sqlplus -s system/$${ORACLE_PASSWORD}@//localhost:1521/XE | grep -Eq '^[[:space:]]*1[[:space:]]*$'"]
       interval: 15s
       timeout: 10s
       retries: 40
 
   oracle-restore:
-    image: gvenzl/oracle-xe:21-slim
+    image: ${HIS_IMAGE_PREFIX:-final_his}/oracle-restore:${HIS_IMAGE_TAG:-local}
+    build:
+      context: .
+      dockerfile: infra/oracle/Dockerfile
     container_name: final-his-oracle-restore
     depends_on:
       oracle:
@@ -26,24 +28,46 @@ services:
       ORACLE_PASSWORD: ${ORACLE_PASSWORD:-1111}
       HOSPITAL_DUMP_FILE: ${HOSPITAL_DUMP_FILE:-hospital_xe_20260521_212722.dmp}
     volumes:
-      - ./HOSPITAL_EXPORT:/dump
-      - ./infra/oracle:/restore:ro
+      - oracle-data:/restore-state
     entrypoint:
       - /bin/bash
       - -lc
       - |
         set -e
+        if [ -f /restore-state/.final-his-restored ]; then
+          echo 'Existing Oracle data detected; skipping initial restore.'
+          exit 0
+        fi
+        if [ -f /restore-state/.final-his-restoring ]; then
+          echo 'A previous initial restore was interrupted. Inspect the schema and restore log before retrying.'
+          exit 1
+        fi
         echo 'Waiting for Oracle XE...'
-        until echo 'select 1 from dual;' | sqlplus -s system/$${ORACLE_PASSWORD}@//oracle:1521/XE | grep -q 1; do sleep 5; done
+        until printf 'set heading off feedback off pagesize 0\nselect 1 from dual;\nexit;\n' | sqlplus -s system/$${ORACLE_PASSWORD}@//oracle:1521/XE | grep -Eq '^[[:space:]]*1[[:space:]]*$'; do sleep 5; done
+        existing_user=$(printf 'whenever sqlerror exit failure\nset heading off feedback off pagesize 0\nselect count(*) from dba_users where username = '\''HOSPITAL'\'';\nexit;\n' | sqlplus -s system/$${ORACLE_PASSWORD}@//oracle:1521/XE | tr -d '[:space:]')
+        if [ "$${existing_user}" = "1" ]; then
+          echo 'Existing HOSPITAL schema found; preserving it.'
+          touch /restore-state/.final-his-restored
+          exit 0
+        fi
+        if [ "$${existing_user}" != "0" ]; then
+          echo 'Could not determine whether the HOSPITAL schema exists.'
+          exit 1
+        fi
         echo 'Preparing HOSPITAL schema...'
+        mkdir -p /restore-state/restore
+        cp "/seed-dump/$${HOSPITAL_DUMP_FILE}" "/restore-state/restore/$${HOSPITAL_DUMP_FILE}"
+        touch /restore-state/.final-his-restoring
         sqlplus -s system/$${ORACLE_PASSWORD}@//oracle:1521/XE @/restore/create_hospital_user.sql
         echo 'Importing HOSPITAL dump...'
         impdp system/$${ORACLE_PASSWORD}@//oracle:1521/XE directory=RESTORE_DIR dumpfile=$${HOSPITAL_DUMP_FILE} logfile=hospital_restore.imp.log schemas=HOSPITAL table_exists_action=replace
+        touch /restore-state/.final-his-restored
+        rm /restore-state/.final-his-restoring
         echo 'Oracle restore complete.'
     restart: "no"
 
   kafka:
-    image: apache/kafka:latest
+    image: apache/kafka:4.3.1
     container_name: final-his-kafka
     environment:
       KAFKA_NODE_ID: 1
@@ -75,7 +99,9 @@ services:
       retries: 20
 
   minio:
-    image: minio/minio:latest
+    image: ${HIS_IMAGE_PREFIX:-final_his}/minio:${HIS_IMAGE_TAG:-local}
+    build:
+      context: ./infra/minio
     container_name: final-his-minio
     command: server /data --console-address ":9001"
     environment:
@@ -87,7 +113,9 @@ services:
     volumes:
       - minio-data:/data
   minio-init:
-    image: minio/mc:latest
+    image: ${HIS_IMAGE_PREFIX:-final_his}/minio:${HIS_IMAGE_TAG:-local}
+    build:
+      context: ./infra/minio
     container_name: final-his-minio-init
     depends_on:
       minio:
@@ -98,14 +126,14 @@ services:
     entrypoint: >
       /bin/sh -c "
       until mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}; do sleep 2; done;
-      mc mb -p local/staff-profile || true;
-      mc mb -p local/hospital-files || true;
-      mc mb -p local/reception-photos || true;
-      exit 0;
+      mc mb --ignore-existing local/staff-profile &&
+      mc mb --ignore-existing local/hospital-files &&
+      mc mb --ignore-existing local/reception-photos;
       "
     restart: "no"
 
   auth-service:
+    image: ${HIS_IMAGE_PREFIX:-final_his}/auth-service:${HIS_IMAGE_TAG:-local}
     build:
       context: ./HIS
       dockerfile: docker/backend.Dockerfile
@@ -142,6 +170,7 @@ services:
       - "${AUTH_PORT:-8586}:8586"
 
   patient-service:
+    image: ${HIS_IMAGE_PREFIX:-final_his}/patient-service:${HIS_IMAGE_TAG:-local}
     build:
       context: ./HIS
       dockerfile: docker/backend.Dockerfile
@@ -165,10 +194,13 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       MINIO_ENDPOINT: http://minio:9000
       MINIO_PUBLIC_URL: http://localhost:${MINIO_API_PORT:-9000}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
     ports:
       - "${PATIENT_PORT:-8182}:8182"
 
   reception-service:
+    image: ${HIS_IMAGE_PREFIX:-final_his}/reception-service:${HIS_IMAGE_TAG:-local}
     build:
       context: ./HIS
       dockerfile: docker/backend.Dockerfile
@@ -192,10 +224,13 @@ services:
       SPRING_DATA_REDIS_PORT: 6379
       MINIO_ENDPOINT: http://minio:9000
       MINIO_PUBLIC_URL: http://localhost:${MINIO_API_PORT:-9000}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
     ports:
       - "${RECEPTION_PORT:-8283}:8283"
 
   staff-service:
+    image: ${HIS_IMAGE_PREFIX:-final_his}/staff-service:${HIS_IMAGE_TAG:-local}
     build:
       context: ./HIS
       dockerfile: docker/backend.Dockerfile
@@ -215,10 +250,13 @@ services:
       SPRING_DATASOURCE_PASSWORD: 1111
       MINIO_URL: http://minio:9000
       MINIO_PUBLIC_BASE_URL: http://localhost:${MINIO_API_PORT:-9000}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
     ports:
       - "${STAFF_PORT:-8023}:8023"
 
   clinical-service:
+    image: ${HIS_IMAGE_PREFIX:-final_his}/clinical-service:${HIS_IMAGE_TAG:-local}
     build:
       context: ./HIS
       dockerfile: docker/backend.Dockerfile
@@ -244,6 +282,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: 1111
       KAFKA_BROKERS: kafka
       KAFKA_BROKER_PORT: 9092
+      APP_SUPPORT_FEEDBACK_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      APP_TEST_RESULT_READY_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       RECEPTION_API_BASE_URL: http://reception-service:8283
       CLINICAL_SUPPORT_API_BASE_URL: http://clinic-support-service:8189
       BILLING_API_BASE_URL: http://billing-service:8081
@@ -251,6 +291,7 @@ services:
       - "${CLINICAL_PORT:-8090}:8090"
 
   clinic-support-service:
+    image: ${HIS_IMAGE_PREFIX:-final_his}/clinic-support-service:${HIS_IMAGE_TAG:-local}
     build:
       context: ./HIS
       dockerfile: docker/backend.Dockerfile
@@ -288,6 +329,7 @@ services:
       - "${CLINIC_SUPPORT_PORT:-8189}:8189"
 
   billing-service:
+    image: ${HIS_IMAGE_PREFIX:-final_his}/billing-service:${HIS_IMAGE_TAG:-local}
     build:
       context: ./HIS
       dockerfile: docker/backend.Dockerfile
@@ -315,6 +357,7 @@ services:
       - "${BILLING_PORT:-8081}:8081"
 
   frontend:
+    image: ${HIS_IMAGE_PREFIX:-final_his}/frontend:${HIS_IMAGE_TAG:-local}
     build:
       context: ./frontend
       dockerfile: Dockerfile

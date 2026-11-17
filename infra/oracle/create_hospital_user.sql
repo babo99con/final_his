@@ -17,7 +17,7 @@ create user HOSPITAL identified by 1111 default tablespace USERS temporary table
 grant create session, resource, connect to HOSPITAL;
 grant create view, create sequence, create trigger, create procedure, create table to HOSPITAL;
 
-create or replace directory RESTORE_DIR as '/dump';
+create or replace directory RESTORE_DIR as '/opt/oracle/oradata/restore';
 grant read, write on directory RESTORE_DIR to HOSPITAL;
 
 exit;
