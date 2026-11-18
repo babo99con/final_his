@@ -1,5 +1,7 @@
 "use client";
 
+import { BILLING_API_BASE_URL } from "@/lib/common/env";
+
 import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -436,6 +438,22 @@ export default function BillingDetailPage() {
       getSessionUser()?.userId ||
       ""
     ).trim();
+  };
+
+  const requestKakaoPay = async () => {
+    if (!billingDetail) return;
+    try {
+      const response = await fetch(BILLING_API_BASE_URL + "/api/billing/kakaopay/ready/" + billingDetail.billId, { method: "POST" });
+      if (response.status === 503) {
+        toast.error("수납 서비스에 KAKAOPAY_SECRET_KEY를 설정해 주세요.");
+        return;
+      }
+      if (!response.ok) throw new Error("Payment preparation failed");
+      const result = await response.json();
+      window.location.assign(result.redirectUrl);
+    } catch {
+      toast.error("카카오페이 테스트 결제를 시작하지 못했습니다.");
+    }
   };
 
   const requestTossCardPayment = async (amount: number) => {
@@ -1560,6 +1578,9 @@ export default function BillingDetailPage() {
                 </div>
 
                 <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+                  <Button variant="outlined" onClick={requestKakaoPay} disabled={loading || billingDetail.remainingAmount <= 0}>
+                    카카오페이 테스트 결제
+                  </Button>
                   <Button
                     variant="contained"
                     onClick={handleFullPayment}

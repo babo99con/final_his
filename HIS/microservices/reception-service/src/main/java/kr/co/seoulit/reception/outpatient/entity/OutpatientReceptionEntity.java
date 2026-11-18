@@ -1,6 +1,8 @@
 package kr.co.seoulit.reception.outpatient.entity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import kr.co.seoulit.reception.persistence.DoctorCodeConverter;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -49,6 +51,7 @@ public class OutpatientReceptionEntity {
     private String departmentName;
 
     @Column(name = "doctor_id")
+    @Convert(converter = DoctorCodeConverter.class)
     private String doctorId;
 
     @Transient

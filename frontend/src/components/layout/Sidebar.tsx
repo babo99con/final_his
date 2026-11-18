@@ -243,11 +243,12 @@ const ensureStaffShortcuts = (menus: MenuNode[]) => {
 };
 
 type SidebarProps = {
+  onNavigate?: () => void;
   menus: MenuNode[];
-  width?: number;
+  width?: number | string;
 };
 
-export default function Sidebar({ menus: initialMenus, width = 240 }: SidebarProps) {
+export default function Sidebar({ menus: initialMenus, width = 240, onNavigate }: SidebarProps) {
   const pathname = usePathname();
   const [openMap, setOpenMap] = React.useState<Record<number, boolean>>({});
   const [fallbackMenus, setFallbackMenus] = React.useState<MenuNode[]>([]);
@@ -474,6 +475,7 @@ export default function Sidebar({ menus: initialMenus, width = 240 }: SidebarPro
           <ListItemButton
             component={Link}
             href={normalizeMenuPath(node.path) ?? "#"}
+            onClick={onNavigate}
             selected={isActive}
             sx={commonButtonSx}
           >
@@ -536,7 +538,7 @@ export default function Sidebar({ menus: initialMenus, width = 240 }: SidebarPro
         )}
       </Box>
 
-      <Box sx={{ mt: 2, pt: 1.5 }}>
+      <Box sx={{ mt: 2, pt: 1.5, display: { xs: "none", md: "block" } }}>
         <Box
           sx={{
             p: 1.25,

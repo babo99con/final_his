@@ -107,7 +107,7 @@ public class PaymentService {
                                          String orderId,
                                          String staffId) {
 
-        Bill bill = billRepository.findById(billId)
+        Bill bill = billRepository.findForPayment(billId)
                 .orElseThrow(() ->
                         new IllegalArgumentException("청구가 존재하지 않습니다. billId=" + billId));
 
@@ -127,10 +127,14 @@ public class PaymentService {
             throw new IllegalArgumentException("결제 수단이 필요합니다.");
         }
 
+        if (method == PaymentMethod.KAKAOPAY && (paymentKey == null || orderId == null)) {
+            throw new IllegalArgumentException("카카오페이 승인 정보가 필요합니다.");
+        }
+
         Payment payment;
 
         // 카드 결제이면서 paymentKey / orderId 가 있으면 토스 원거래 정보까지 저장
-        if (method == PaymentMethod.CARD
+        if ((method == PaymentMethod.CARD || method == PaymentMethod.KAKAOPAY)
                 && paymentKey != null && !paymentKey.isBlank()
                 && orderId != null && !orderId.isBlank()) {
 
@@ -201,6 +205,9 @@ public class PaymentService {
         }
 
         // 카드 결제면 토스 취소 먼저 호출
+        if (payment.getMethod() == PaymentMethod.KAKAOPAY) {
+            throw new IllegalStateException("카카오페이 취소 및 환불은 지원하지 않습니다.");
+        }
         if (payment.getMethod() == PaymentMethod.CARD) {
             if (payment.getPaymentKey() == null || payment.getPaymentKey().isBlank()) {
                 throw new IllegalStateException("카드 결제의 paymentKey가 없어 토스 취소를 진행할 수 없습니다.");
@@ -265,6 +272,9 @@ public class PaymentService {
         }
 
         // 카드 결제 환불이면 토스 부분 취소 먼저 호출
+        if (originalPayment.getMethod() == PaymentMethod.KAKAOPAY) {
+            throw new IllegalStateException("카카오페이 취소 및 환불은 지원하지 않습니다.");
+        }
         if (originalPayment.getMethod() == PaymentMethod.CARD) {
             if (originalPayment.getPaymentKey() == null || originalPayment.getPaymentKey().isBlank()) {
                 throw new IllegalStateException("카드 결제의 paymentKey가 없어 토스 부분 환불을 진행할 수 없습니다.");

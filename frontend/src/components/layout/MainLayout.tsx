@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Box, CircularProgress } from "@mui/material";
+import { Box, CircularProgress, Link } from "@mui/material";
 import { usePathname } from "next/navigation";
 import RouteAccessGuard from "@/components/auth/RouteAccessGuard";
 import { useMenus, useSetMenus } from "@/components/layout/MenuContext";
@@ -118,7 +118,9 @@ export default function MainLayout({
     <RouteAccessGuard menus={menus}>
       <Box
         sx={{
-          minHeight: "100vh",
+          minHeight: "100dvh",
+          display: "flex",
+          flexDirection: "column",
           overflowX: "hidden",
           backgroundImage: [
             "radial-gradient(circle at 12% 8%, rgba(11, 91, 143, 0.18) 0%, rgba(11, 91, 143, 0) 38%)",
@@ -131,7 +133,8 @@ export default function MainLayout({
         {showSidebar ? (
           <Box
             sx={{
-              position: { xs: "static", md: "fixed" },
+              display: { xs: "none", md: "block" },
+              position: "fixed",
               top: { xs: 0, md: `${NAV_H.md}px` },
               left: 0,
               width: { xs: "100%", md: `${SIDEBAR_W}px` },
@@ -144,11 +147,12 @@ export default function MainLayout({
           </Box>
         ) : null}
 
-        <Navbar />
-        <Box sx={{ height: NAV_H }} />
+        <Navbar menus={showSidebar ? menus : undefined} />
+        <Box sx={{ height: NAV_H, flexShrink: 0 }} />
         <Box
           sx={{
             ml: showSidebar ? { xs: 0, md: `${SIDEBAR_W}px` } : 0,
+            flex: "1 0 auto",
             px: { xs: 2, md: 4 },
             py: 3,
           }}
@@ -169,6 +173,28 @@ export default function MainLayout({
             )}
           </Box>
         </Box>
+        {authStatus === "ready" && !pathname?.startsWith("/login") ? (
+          <Box
+            component="footer"
+            sx={{
+              ml: showSidebar ? { xs: 0, md: SIDEBAR_W + "px" } : 0,
+              px: { xs: 2, md: 4 },
+              py: 1.25,
+              borderTop: 1,
+              borderColor: "divider",
+              color: "text.secondary",
+              typography: "body2",
+            }}
+          >
+            <Link
+              href="https://github.com/babo99con/final_his#readme"
+              color="inherit"
+              underline="always"
+            >
+              프로젝트 문서
+            </Link>
+          </Box>
+        ) : null}
       </Box>
     </RouteAccessGuard>
   );

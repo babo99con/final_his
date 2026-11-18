@@ -26,7 +26,7 @@ services:
         condition: service_healthy
     environment:
       ORACLE_PASSWORD: ${ORACLE_PASSWORD:-1111}
-      HOSPITAL_DUMP_FILE: ${HOSPITAL_DUMP_FILE:-hospital_xe_20260521_212722.dmp}
+      HOSPITAL_DUMP_FILE: ${HOSPITAL_DUMP_FILE:-hospital_public_demo.dmp}
     volumes:
       - oracle-data:/restore-state
     entrypoint:
@@ -34,8 +34,13 @@ services:
       - -lc
       - |
         set -e
+        migrate_billing() {
+          sqlplus -L -s system/$${ORACLE_PASSWORD}@//oracle:1521/XE @/restore/migrate_bill_item.sql
+          sqlplus -L -s system/$${ORACLE_PASSWORD}@//oracle:1521/XE @/restore/migrate_kakaopay.sql
+        }
         if [ -f /restore-state/.final-his-restored ]; then
           echo 'Existing Oracle data detected; skipping initial restore.'
+          migrate_billing
           exit 0
         fi
         if [ -f /restore-state/.final-his-restoring ]; then
@@ -47,6 +52,7 @@ services:
         existing_user=$(printf 'whenever sqlerror exit failure\nset heading off feedback off pagesize 0\nselect count(*) from dba_users where username = '\''HOSPITAL'\'';\nexit;\n' | sqlplus -s system/$${ORACLE_PASSWORD}@//oracle:1521/XE | tr -d '[:space:]')
         if [ "$${existing_user}" = "1" ]; then
           echo 'Existing HOSPITAL schema found; preserving it.'
+          migrate_billing
           touch /restore-state/.final-his-restored
           exit 0
         fi
@@ -61,6 +67,8 @@ services:
         sqlplus -s system/$${ORACLE_PASSWORD}@//oracle:1521/XE @/restore/create_hospital_user.sql
         echo 'Importing HOSPITAL dump...'
         impdp system/$${ORACLE_PASSWORD}@//oracle:1521/XE directory=RESTORE_DIR dumpfile=$${HOSPITAL_DUMP_FILE} logfile=hospital_restore.imp.log schemas=HOSPITAL table_exists_action=replace
+        sqlplus -L -s system/$${ORACLE_PASSWORD}@//oracle:1521/XE @/restore/seed_reception_demo.sql
+        migrate_billing
         touch /restore-state/.final-his-restored
         rm /restore-state/.final-his-restoring
         echo 'Oracle restore complete.'
@@ -142,6 +150,8 @@ services:
         ARTIFACT_NAME: hospital-0.0.1-SNAPSHOT.war
     container_name: final-his-auth
     depends_on:
+      # Oracle에 접속할 수 있어도 HOSPITAL 스키마 복원은 진행 중일 수 있다.
+      # 복원 작업이 성공한 뒤 인증 서비스를 시작한다.
       oracle-restore:
         condition: service_completed_successfully
       redis:
@@ -217,6 +227,7 @@ services:
         condition: service_completed_successfully
     environment:
       SERVER_PORT: 8283
+      PATIENT_SERVICE_BASE_URL: http://patient-service:8182
       SPRING_DATASOURCE_URL: jdbc:oracle:thin:@//oracle:1521/XE
       SPRING_DATASOURCE_USERNAME: HOSPITAL
       SPRING_DATASOURCE_PASSWORD: 1111
@@ -282,6 +293,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: 1111
       KAFKA_BROKERS: kafka
       KAFKA_BROKER_PORT: 9092
+      # 컨테이너 안의 localhost는 진료 서비스 자신을 가리킨다.
+      # 진료지원 결과를 받는 소비자는 Compose 서비스 이름으로 Kafka에 접속한다.
       APP_SUPPORT_FEEDBACK_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       APP_TEST_RESULT_READY_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       RECEPTION_API_BASE_URL: http://reception-service:8283
@@ -353,6 +366,8 @@ services:
       KAFKA_BROKER_PORT: 9092
       PATIENT_API_BASE_URL: http://patient-service:8182
       TOSS_SECRET_KEY: ${TOSS_SECRET_KEY:-}
+      KAKAOPAY_SECRET_KEY: ${KAKAOPAY_SECRET_KEY:-}
+      KAKAOPAY_WEB_ORIGIN: ${KAKAOPAY_WEB_ORIGIN:-http://localhost:3001}
     ports:
       - "${BILLING_PORT:-8081}:8081"
 
@@ -381,6 +396,8 @@ services:
         RECEPTION_API_INTERNAL_URL: http://reception-service:8283
         BILLING_API_INTERNAL_URL: http://billing-service:8081
         NOTIFICATION_API_INTERNAL_URL: http://auth-service:8586
+    environment:
+      BILLING_API_INTERNAL_URL: http://billing-service:8081
     container_name: final-his-frontend
     depends_on:
       auth-service:

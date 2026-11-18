@@ -29,6 +29,15 @@
           AND s.staff_id LIKE 'DOC-%'
     </select>
 
+    <select id="selectStaffKey" resultType="long">
+        SELECT s.id FROM HOSPITAL.CMH_STAFF s WHERE s.staff_id = #{doctorCode}
+    </select>
+
+    <select id="selectDoctorCode" resultType="string">
+        SELECT s.staff_id FROM HOSPITAL.CMH_STAFF s
+        WHERE s.id = #{staffKey} AND s.staff_id LIKE 'DOC-%'
+    </select>
+
     <select id="countActiveDoctors" resultType="int">
         SELECT COUNT(*)
         FROM HOSPITAL.CMH_STAFF s

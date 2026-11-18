@@ -7,10 +7,23 @@ import {
   Box,
   Stack,
   Button,
+  Divider,
+  Drawer,
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemText,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import MedicalServicesOutlinedIcon from "@mui/icons-material/MedicalServicesOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import MenuIcon from "@mui/icons-material/Menu";
+import CloseIcon from "@mui/icons-material/Close";
+import Sidebar from "./Sidebar";
+import type { MenuNode } from "@/types/menu";
 import * as React from "react";
 import { logoutApi } from "@/lib/auth/authApi";
 import {
@@ -20,7 +33,15 @@ import {
   type SessionUser,
 } from "@/lib/auth/session";
 
-export default function Navbar() {
+export default function Navbar({ menus }: { menus?: MenuNode[] }) {
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const pathname = usePathname();
+  const theme = useTheme();
+  const desktop = useMediaQuery(theme.breakpoints.up("md"));
+
+  React.useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname, desktop]);
   const [sessionUser, setSessionUser] = React.useState<SessionUser | null>(null);
 
   React.useEffect(() => {
@@ -68,12 +89,13 @@ export default function Navbar() {
           direction="row"
           spacing={1.5}
           alignItems="center"
-          sx={{ mr: 3, textDecoration: "none" }}
+          sx={{ minWidth: 0, mr: { xs: 1, md: 3 }, textDecoration: "none" }}
           component={Link}
           href="/"
         >
           <Box
             sx={{
+              flexShrink: 0,
               width: 38,
               height: 38,
               borderRadius: 1.5,
@@ -86,14 +108,15 @@ export default function Navbar() {
             <MedicalServicesOutlinedIcon sx={{ color: "#fff" }} />
           </Box>
 
-          <Box>
+          <Box sx={{ minWidth: 0 }}>
             <Typography
               variant="h6"
-              sx={{ color: "#fff", fontWeight: 800, letterSpacing: 0.4 }}
+              noWrap
+              sx={{ color: "#fff", fontWeight: 800, letterSpacing: 0.4, fontSize: { xs: 16, md: 20 } }}
             >
               HMS Workspace
             </Typography>
-            <Typography sx={{ color: "rgba(255,255,255,0.7)", fontSize: 12 }}>
+            <Typography sx={{ display: { xs: "none", md: "block" }, color: "rgba(255,255,255,0.7)", fontSize: 12 }}>
               역할 기반 병원관리 시스템
             </Typography>
           </Box>
@@ -101,7 +124,18 @@ export default function Navbar() {
 
         <Box sx={{ flexGrow: 1 }} />
 
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Button
+          color="inherit"
+          startIcon={<MenuIcon />}
+          aria-expanded={menuOpen}
+          aria-controls={menuOpen ? "mobile-navigation" : undefined}
+          onClick={() => setMenuOpen(true)}
+          sx={{ display: { xs: "inline-flex", md: "none" }, flexShrink: 0, minHeight: 44 }}
+        >
+          메뉴
+        </Button>
+
+        <Stack direction="row" spacing={2} alignItems="center" sx={{ display: { xs: "none", md: "flex" } }}>
           <Stack direction="row" spacing={1} alignItems="center">
             <PersonOutlineOutlinedIcon sx={{ color: "#dbe8ff" }} />
             <Typography sx={{ color: "#e8f1ff", fontSize: 14, fontWeight: 600 }}>
@@ -150,6 +184,44 @@ export default function Navbar() {
           </Button>
         </Stack>
       </Toolbar>
+      <Drawer
+        anchor="right"
+        open={menuOpen && !desktop}
+        onClose={() => setMenuOpen(false)}
+        slotProps={{
+          paper: {
+            id: "mobile-navigation",
+            role: "dialog",
+            "aria-modal": true,
+            "aria-labelledby": "mobile-navigation-title",
+            sx: { width: "min(320px, 90vw)", overflowY: "auto" },
+          },
+        }}
+      >
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2, minHeight: 64 }}>
+          <Typography id="mobile-navigation-title" fontWeight={700}>메뉴</Typography>
+          <IconButton aria-label="메뉴 닫기" onClick={() => setMenuOpen(false)} sx={{ minWidth: 44, minHeight: 44 }}>
+            <CloseIcon />
+          </IconButton>
+        </Stack>
+        <Divider />
+        <List aria-label="계정">
+          <ListItemButton component={Link} href="/mypage" onClick={() => setMenuOpen(false)}>
+            <ListItemText primary="내 정보" secondary={sessionUser?.fullName || sessionUser?.username} />
+          </ListItemButton>
+          <ListItemButton onClick={handleLogout}>
+            <ListItemText primary="로그아웃" />
+          </ListItemButton>
+        </List>
+        {menus ? (
+          <>
+            <Divider />
+            <Box component="nav" aria-label="병원 운영 메뉴">
+              <Sidebar menus={menus} width="100%" onNavigate={() => setMenuOpen(false)} />
+            </Box>
+          </>
+        ) : null}
+      </Drawer>
     </AppBar>
   );
 }

@@ -11,12 +11,11 @@ handoff-root/
   HIS/
   frontend/
   HOSPITAL_EXPORT/
-    hospital_xe_20260521_212722.dmp
-    hospital_xe_20260521_212722.exp.log
+    hospital_public_demo.dmp
   HIS_LOCAL_SETUP_README.md
 ```
 
-중요한 덤프 파일은 `HOSPITAL_EXPORT/hospital_xe_20260521_212722.dmp`입니다.
+중요한 덤프 파일은 `HOSPITAL_EXPORT/hospital_public_demo.dmp`입니다.
 
 ## 2. 설치해야 하는 것
 
@@ -82,7 +81,7 @@ docker logs -f hospital-oracle
 
 ```powershell
 docker exec hospital-oracle bash -lc "mkdir -p /tmp/datapump"
-docker cp .\HOSPITAL_EXPORT\hospital_xe_20260521_212722.dmp hospital-oracle:/tmp/datapump/hospital_xe_20260521_212722.dmp
+docker cp .\HOSPITAL_EXPORT\hospital_public_demo.dmp hospital-oracle:/tmp/datapump/hospital_public_demo.dmp
 ```
 
 `HOSPITAL` 계정과 Data Pump directory를 생성합니다.
@@ -102,7 +101,7 @@ exit;
 덤프를 import합니다.
 
 ```powershell
-docker exec hospital-oracle bash -lc "impdp system/1111@//localhost:1521/XE directory=RESTORE_DIR dumpfile=hospital_xe_20260521_212722.dmp logfile=hospital_restore.imp.log schemas=HOSPITAL table_exists_action=replace"
+docker exec hospital-oracle bash -lc "impdp system/1111@//localhost:1521/XE directory=RESTORE_DIR dumpfile=hospital_public_demo.dmp logfile=hospital_restore.imp.log schemas=HOSPITAL table_exists_action=replace"
 ```
 
 복원 확인:
@@ -365,7 +364,7 @@ npm.cmd run build
 ```text
 HIS 소스
 frontend 소스
-HOSPITAL_EXPORT/hospital_xe_20260521_212722.dmp
+HOSPITAL_EXPORT/hospital_public_demo.dmp
 HIS_LOCAL_SETUP_README.md
 ```
 

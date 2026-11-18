@@ -12,6 +12,10 @@ public interface DoctorMapper {
 
     String selectDoctorNameById(@Param("doctorId") String doctorId);
 
+    Long selectStaffKey(@Param("doctorCode") String doctorCode);
+
+    String selectDoctorCode(@Param("staffKey") Long staffKey);
+
     int countActiveDoctors(
             @Param("doctorId") String doctorId,
             @Param("departmentId") String departmentId

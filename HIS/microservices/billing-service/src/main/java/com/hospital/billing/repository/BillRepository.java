@@ -12,6 +12,10 @@ import java.util.Optional;
 
 public interface BillRepository extends JpaRepository<Bill, Long> {
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select b from Bill b where b.id = :id")
+    Optional<Bill> findForPayment(@Param("id") Long id);
+
     List<Bill> findByPatientId(Long patientId);
 
     /**

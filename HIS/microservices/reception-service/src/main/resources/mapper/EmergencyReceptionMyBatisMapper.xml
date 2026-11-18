@@ -14,8 +14,8 @@
             r.visit_type,
             r.department_id,
             d.name AS department_name,
-            r.doctor_id,
-            doc.full_name AS doctor_name,
+            COALESCE(doc.staff_id, TO_CHAR(r.doctor_id)) AS doctor_id,
+            COALESCE(doc.full_name, legacy_doc.full_name) AS doctor_name,
             r.reservation_id,
             r.scheduled_at,
             r.arrived_at,
@@ -37,7 +37,8 @@
         FROM RECEPTION r
         LEFT JOIN patient p ON p.patient_id = r.patient_id
         LEFT JOIN departments d ON d.id = r.department_id
-        LEFT JOIN staff doc ON doc.id = r.doctor_id
+        LEFT JOIN HOSPITAL.CMH_STAFF doc ON doc.id = r.doctor_id AND doc.staff_id LIKE 'DOC-%'
+        LEFT JOIN staff legacy_doc ON legacy_doc.id = r.doctor_id
         LEFT JOIN emergency_detail ed ON ed.reception_id = r.reception_id
         LEFT JOIN (
             SELECT triage_latest.*

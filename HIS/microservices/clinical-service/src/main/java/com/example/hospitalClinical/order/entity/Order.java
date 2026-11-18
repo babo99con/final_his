@@ -1,5 +1,6 @@
 package com.example.hospitalClinical.order.entity;
 
+import com.example.hospitalClinical.common.persistence.DoctorCodeConverter;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -25,7 +26,8 @@ public class Order {
     @Column(name = "ORDER_STATUS", length = 20)
     private String orderStatus;
 
-    @Column(name = "DOCTOR_ID", length = 30)
+    @Column(name = "DOCTOR_ID")
+    @Convert(converter = DoctorCodeConverter.class)
     private String doctorId;
 
     @Column(name = "ORDER_DATE")

@@ -1,7 +1,10 @@
 *
 !HOSPITAL_EXPORT/
-!HOSPITAL_EXPORT/*.dmp
+!HOSPITAL_EXPORT/hospital_public_demo.dmp
 !infra/
 !infra/oracle/
 !infra/oracle/create_hospital_user.sql
+!infra/oracle/seed_reception_demo.sql
 !infra/oracle/Dockerfile
+!infra/oracle/migrate_bill_item.sql
+!infra/oracle/migrate_kakaopay.sql

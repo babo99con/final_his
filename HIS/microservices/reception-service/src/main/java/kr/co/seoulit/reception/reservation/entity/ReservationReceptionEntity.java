@@ -1,6 +1,8 @@
 package kr.co.seoulit.reception.reservation.entity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import kr.co.seoulit.reception.persistence.DoctorCodeConverter;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -35,16 +37,18 @@ public class ReservationReceptionEntity {
     @Column(name = "patient_id", nullable = false)
     private Long patientId;
 
-    @Transient
+    // The restored Oracle schema requires both names when inserting a reservation.
+    @Column(name = "patient_name", nullable = false)
     private String patientName;
 
     @Column(name = "department_id", nullable = false)
     private String departmentId;
 
-    @Transient
+    @Column(name = "department_name", nullable = false)
     private String departmentName;
 
     @Column(name = "doctor_id")
+    @Convert(converter = DoctorCodeConverter.class)
     private String doctorId;
 
     @Transient

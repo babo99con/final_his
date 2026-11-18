@@ -7,7 +7,8 @@ WORKDIR /workspace
 COPY . .
 
 WORKDIR /workspace/microservices/${SERVICE_DIR}
-RUN sed -i 's/\r$//' gradlew \
+RUN --mount=type=cache,id=final-his-gradle,target=/root/.gradle,sharing=locked \
+    sed -i 's/\r$//' gradlew \
     && chmod +x gradlew \
     && ./gradlew clean assemble -x test --no-daemon \
     && test -f "build/libs/${ARTIFACT_NAME}"

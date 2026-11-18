@@ -1,6 +1,8 @@
 package kr.co.seoulit.reception.outpatient.entity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import kr.co.seoulit.reception.persistence.DoctorCodeConverter;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -48,6 +50,7 @@ public class OutpatientWaitingQueueEntity {
     private String deptId;
 
     @Column(name = "doctor_id")
+    @Convert(converter = DoctorCodeConverter.class)
     private String doctorId;
 
     @Column(name = "estimated_wait_min")

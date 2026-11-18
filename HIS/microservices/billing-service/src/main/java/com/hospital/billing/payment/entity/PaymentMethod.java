@@ -2,6 +2,7 @@ package com.hospital.billing.payment.entity;
 
 public enum PaymentMethod {
 
+    KAKAOPAY,
     CASH,       // 현금
     CARD,       // 카드
     TRANSFER,   // 계좌이체

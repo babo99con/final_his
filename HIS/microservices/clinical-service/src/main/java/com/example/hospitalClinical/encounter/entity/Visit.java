@@ -1,5 +1,6 @@
 package com.example.hospitalClinical.encounter.entity;
 
+import com.example.hospitalClinical.common.persistence.DoctorCodeConverter;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -30,7 +31,8 @@ public class Visit {
     @Column(name = "PATIENT_ID", nullable = false)
     private Long patientId;
 
-    @Column(name = "DOCTOR_ID", nullable = false, length = 30)
+    @Column(name = "DOCTOR_ID", nullable = false)
+    @Convert(converter = DoctorCodeConverter.class)
     private String doctorId;
 
     @Column(name = "RECEPTION_ID", nullable = false)
